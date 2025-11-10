@@ -7,7 +7,7 @@ A simple and small ini file parsing library. Licensed under MIT.
 There are two very easy ways to include this INI library in your project.
 You can simply add the `ini.c` and `ini.h` to your project, or you can
 include the project via CMake submodule and add the static library to your
-target. If you don't understand the first, do the second :)
+target. If you don't understand the latter, go with the former :)
 
 ## Documentation
 
