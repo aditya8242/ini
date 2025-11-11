@@ -11,7 +11,7 @@ target. If you don't understand the latter, go with the former :)
 
 ## Documentation
 
-For now, the functions are documented in `ini.h` via comments.
+You can find the documentation [here](src/ini.h).
 
 ## Contributing
 
