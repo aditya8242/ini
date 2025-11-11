@@ -210,7 +210,7 @@ INISection_t *ini_has_section(const INIData_t *data, const char *section)
 
 
 
-void ini_section_init(const char *name, INISection_t *section)
+static void section_init_(const char *name, INISection_t *section)
 {
     assert(section);
     if (!section) return;
@@ -235,7 +235,7 @@ INISection_t *ini_add_section(INIData_t *data, const char *name)
         data->sections = re;
     }
     INISection_t *section = &data->sections[data->section_count++];
-    ini_section_init(name, section);
+    section_init_(name, section);
     return section;
 }
 
@@ -463,6 +463,41 @@ bool ini_parse_section(const char *line, INISection_t *section, ptrdiff_t *discr
 
 
 
+bool ini_parse_pair(const char *line, INIPair_t *pair, ptrdiff_t *discrepancy)
+{
+    assert(line);
+    if (!line) return false;
+
+    if (discrepancy) *discrepancy = 0;
+
+    if (pair)
+        memset(pair->key, 0, sizeof(pair->key));
+
+    char key[INI_MAX_STRING_SIZE];
+    if (!ini_parse_key(line, key, INI_MAX_STRING_SIZE, discrepancy)) goto is_not_pair;
+
+    char value[INI_MAX_STRING_SIZE];
+    if (!ini_parse_value(line, value, INI_MAX_STRING_SIZE, discrepancy)) goto is_not_pair;
+
+    if (pair)
+    {
+        memcpy(pair->key, key, INI_MAX_STRING_SIZE);
+        memcpy(pair->value, value, INI_MAX_STRING_SIZE);
+    }
+
+    return true;
+
+    is_not_pair:
+    if (pair)
+    {
+        pair->key[0] = '\0';
+        pair->value[0] = '\0';
+    }
+    return false;
+}
+
+
+
 static bool is_valid_key_starting_value_(const char c)
 {
     return (isalpha( (unsigned char) c)) || c == '_';
@@ -473,18 +508,6 @@ static bool is_valid_key_starting_value_(const char c)
 static bool is_valid_key_character_(const char c)
 {
     return (isalnum((unsigned char)c)) || c == '_';
-}
-
-
-
-static bool is_valid_value_character_(const char c, const bool quoted)
-{
-    if (isalnum((unsigned char)c)) return true;
-    const char valid_special[] = "_-+.,:\'()[]{}\\/";
-    for (const char *p = valid_special; *p != '\0'; p++)
-        if (c == *p) return true;
-    if (quoted && c == ' ') return true;
-    return false;
 }
 
 
@@ -514,6 +537,18 @@ bool ini_parse_key(const char *line, char *dest, unsigned n, ptrdiff_t *discrepa
 
     is_not_key:
     if (discrepancy) *discrepancy = c - line;
+    return false;
+}
+
+
+
+static bool is_valid_value_character_(const char c, const bool quoted)
+{
+    if (isalnum((unsigned char)c)) return true;
+    const char valid_special[] = "_-+.,:\'()[]{}\\/";
+    for (const char *p = valid_special; *p != '\0'; p++)
+        if (c == *p) return true;
+    if (quoted && c == ' ') return true;
     return false;
 }
 
@@ -558,40 +593,5 @@ bool ini_parse_value(const char *line, char *dest, unsigned n, ptrdiff_t *discre
 
     is_not_value:
     if (discrepancy) *discrepancy = c - line;
-    return false;
-}
-
-
-
-bool ini_parse_pair(const char *line, INIPair_t *pair, ptrdiff_t *discrepancy)
-{
-    assert(line);
-    if (!line) return false;
-
-    if (discrepancy) *discrepancy = 0;
-
-    if (pair)
-        memset(pair->key, 0, sizeof(pair->key));
-
-    char key[INI_MAX_STRING_SIZE];
-    if (!ini_parse_key(line, key, INI_MAX_STRING_SIZE, discrepancy)) goto is_not_pair;
-
-    char value[INI_MAX_STRING_SIZE];
-    if (!ini_parse_value(line, value, INI_MAX_STRING_SIZE, discrepancy)) goto is_not_pair;
-
-    if (pair)
-    {
-        memcpy(pair->key, key, INI_MAX_STRING_SIZE);
-        memcpy(pair->value, value, INI_MAX_STRING_SIZE);
-    }
-
-    return true;
-
-    is_not_pair:
-    if (pair)
-    {
-        pair->key[0] = '\0';
-        pair->value[0] = '\0';
-    }
     return false;
 }

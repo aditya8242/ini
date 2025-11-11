@@ -53,19 +53,19 @@ typedef struct INIError_t   INIError_t;
 INIData_t         *ini_parse_file          (FILE*, INIError_t*);
 void               ini_write_file          (const INIData_t*, FILE*);
 INISection_t      *ini_has_section         (const INIData_t*, const char*);
-void               ini_section_init        (const char*,      INISection_t*);
 INISection_t      *ini_add_section         (INIData_t*,       const char*);
 INIPair_t         *ini_add_pair            (INIData_t*,       const char*,   INIPair_t);
-INIPair_t         *ini_add_pair_to_section (INISection_t *,   INIPair_t );
+INIPair_t         *ini_add_pair_to_section (INISection_t *,   INIPair_t);
 const char        *ini_get_value           (const INIData_t*, const char*,   const char*);
+const char        *ini_get_string          (INIData_t *,      const char*,   const char*, const char*);
 unsigned long long ini_get_unsigned        (const INIData_t*, const char*,   const char*, unsigned long long);
 long long          ini_get_signed          (const INIData_t*, const char*,   const char*, long long);
 long double        ini_get_float           (const INIData_t*, const char*,   const char*, long double);
 bool               ini_get_bool            (const INIData_t*, const char*,   const char*, bool);
 void               ini_free                (INIData_t*);
 bool               ini_is_blank_line       (const char*);
-bool               ini_parse_pair          (const char*,      INIPair_t*,    ptrdiff_t*);
 bool               ini_parse_section       (const char*,      INISection_t*, ptrdiff_t*);
+bool               ini_parse_pair          (const char*,      INIPair_t*,    ptrdiff_t*);
 bool               ini_parse_key           (const char*,      char*,         unsigned,    ptrdiff_t*);
 bool               ini_parse_value         (const char*,      char*,         unsigned,    ptrdiff_t*);
 
@@ -181,18 +181,6 @@ void ini_write_file(const INIData_t *data, FILE *file);
  *   the section is not found.
  */
 INISection_t *ini_has_section(const INIData_t *data, const char *section);
-
-
-
-/*
- * Initialize a section with a name, an allocation for pairs,
- * and starting its pair count at 0.
- *
- * Params:
- *   name    - The name of the section.
- *   section - Destination pointer for the setion to be initialized.
- */
-void ini_section_init(const char *name, INISection_t *section);
 
 
 
@@ -418,6 +406,30 @@ bool ini_parse_section(const char *line, INISection_t *section, ptrdiff_t *discr
 
 
 /*
+ * A helper function that reads a character array and
+ * attempts to parse a valid pair.
+ *
+ * Params:
+ *   line         - The character array to be parsed.
+ *   pair         - A pointer to a destination pair to store
+ *                  key and value strings. If NULL is provided,
+ *                  has no effect. If a string is not a valid
+ *                  pair, then the key and value strings are
+ *                  zero-length and null-terminated.
+ *   discrepancy  - A pointer to an integer representing the
+ *                  offset of the erroneous character if
+ *                  present. If no error found, will be given
+ *                  0. If NULL, has no effect.
+ *
+ * Returns:
+ *   True if the line is considered a legal k=v pair,
+ *   false otherwise.
+ */
+bool ini_parse_pair(const char *line, INIPair_t *pair, ptrdiff_t *discrepancy );
+
+
+
+/*
  * A helper function that parses a character array and
  * attempts to parse a valid key.
  *
@@ -463,29 +475,6 @@ bool ini_parse_key(const char *line, char *dest, unsigned n, ptrdiff_t *discrepa
  */
 bool ini_parse_value(const char *line, char *dest, unsigned n, ptrdiff_t *discrepancy);
 
-
-
-/*
- * A helper function that reads a character array and
- * attempts to parse a valid pair.
- *
- * Params:
- *   line         - The character array to be parsed.
- *   pair         - A pointer to a destination pair to store
- *                  key and value strings. If NULL is provided,
- *                  has no effect. If a string is not a valid
- *                  pair, then the key and value strings are
- *                  zero-length and null-terminated.
- *   discrepancy  - A pointer to an integer representing the
- *                  offset of the erroneous character if
- *                  present. If no error found, will be given
- *                  0. If NULL, has no effect.
- *
- * Returns:
- *   True if the line is considered a legal k=v pair,
- *   false otherwise.
- */
-bool ini_parse_pair(const char *line, INIPair_t *pair, ptrdiff_t *discrepancy );
 
 
 #endif //INI_H
