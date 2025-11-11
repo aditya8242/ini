@@ -50,19 +50,7 @@ static void set_parse_error_(INIError_t *error, const char *line, ptrdiff_t offs
 
     strncpy(error->msg, msg, strnlen(msg, INI_MAX_LINE_SIZE));
 
-    int culprit_line_length = strnlen(line, INI_MAX_LINE_SIZE);
-    strncpy(error->line, line, culprit_line_length);
-
-    for (int i = 0; i < culprit_line_length; i++)
-    {
-        error->culprit[i] = line[i];
-        if (i < offset)
-            error->culprit[i + culprit_line_length] = ' ';
-        else if (i == offset)
-            error->culprit[i + culprit_line_length] = '^';
-    }
-    error->culprit[culprit_line_length + offset + 1] = '\n';
-    error->culprit[culprit_line_length + offset + 2] = '\0';
+    strncpy(error->line, line, strnlen(line, INI_MAX_LINE_SIZE));
 }
 
 
@@ -73,7 +61,6 @@ static void clear_parse_error_(INIError_t *error)
     error->encountered = false;
     memset(error->line, 0, sizeof(error->line));
     memset(error->msg, 0, sizeof(error->msg));
-    memset(error->culprit, 0, sizeof(error->culprit));
     error->offset = 0;
 }
 

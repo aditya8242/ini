@@ -101,9 +101,16 @@ struct INIPair_t
  */
 struct INISection_t
 {
+    // Name of the section, excluding the encapsulating
+    // [ ] characters
     char name[INI_MAX_STRING_SIZE];
+
+    // Pointer to pairs
     INIPair_t *pairs;
     unsigned pair_count;
+
+    // Number of allocated pairs
+    // >= pair_count
     unsigned pair_allocation;
 };
 
@@ -115,20 +122,31 @@ struct INISection_t
  */
 struct INIData_t
 {
+
+    // Pointer to sections
     INISection_t *sections;
     unsigned section_count;
+
+    // Number of allocated sections
+    // >= section_count
     unsigned section_allocation;
 };
 
 
 
-// TODO document
+/*
+ * A container for the parsing error information.
+ */
 struct INIError_t
 {
+    // Set if an error is encountered during parsing
     bool encountered;
+
+    // A message describing the error
     char msg[INI_MAX_LINE_SIZE];
+
+    // The culprit line
     char line[INI_MAX_LINE_SIZE];
-    char culprit[INI_MAX_LINE_SIZE * 2 + 4]; // two lines, two newlines, two nulls
     ptrdiff_t offset;
 };
 

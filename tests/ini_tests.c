@@ -367,8 +367,6 @@ TEST(ini_tests, parse_error_bad_key)
     ASSERT_EQ(error.offset, 1);
     ASSERT_STREQ(error.line, "b$ad=pair\n");
     ASSERT_STREQ(error.msg, "Failed to parse pair.");
-    ASSERT_STREQ(error.culprit, "b$ad=pair\n"
-                                " ^\n");
     ini_free(data);
     fclose(file);
 }
@@ -388,8 +386,6 @@ TEST(ini_tests, parse_error_bad_value)
     ASSERT_TRUE(error.encountered);
     ASSERT_STREQ(error.line, "bad=pa$ir\n");
     ASSERT_STREQ(error.msg, "Failed to parse pair.");
-    ASSERT_STREQ(error.culprit, "bad=pa$ir\n"
-                                "      ^\n");
     ini_free(data);
     fclose(file);
 }
@@ -408,8 +404,6 @@ TEST(ini_tests, parse_error_no_section)
     ASSERT_TRUE(error.encountered);
     ASSERT_STREQ(error.line, "key=value\n");
     ASSERT_STREQ(error.msg, "Pairs must reside within a section.");
-    ASSERT_STREQ(error.culprit, "key=value\n"
-                                "^\n");
     ini_free(data);
     fclose(file);
 }
@@ -428,8 +422,6 @@ TEST(ini_tests, parse_error_bad_section)
     ASSERT_TRUE(error.encountered);
     ASSERT_STREQ(error.line, "[Bad Section]\n");
     ASSERT_STREQ(error.msg, "Failed to parse section.");
-    ASSERT_STREQ(error.culprit, "[Bad Section]\n"
-                                "     ^\n");
     ini_free(data);
     fclose(file);
 }
@@ -449,8 +441,6 @@ TEST(ini_tests, parse_error_duplicate_section)
     ASSERT_TRUE(error.encountered);
     ASSERT_STREQ(error.line, "[Section]\n");
     ASSERT_STREQ(error.msg, "Duplicate section 'Section'.");
-    ASSERT_STREQ(error.culprit, "[Section]\n"
-                                "^\n");
     ini_free(data);
     fclose(file);
 }
