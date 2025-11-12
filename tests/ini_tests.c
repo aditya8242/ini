@@ -10,13 +10,17 @@
 TEST(ini_tests, blank_lines)
 {
     const char empty_line[] = "";
-    const char space_line[] = "   ";
+    const char space_line[] = " ";
+    const char multiple_space_line[] = "   ";
+    const char tab_line[] = "\t";
     const char new_line[] = "\n";
     const char null_line[] = "\0";
     const char alt_comment_line[] = "; comment here!";
 
     ASSERT_TRUE(ini_is_blank_line(empty_line));
     ASSERT_TRUE(ini_is_blank_line(space_line));
+    ASSERT_TRUE(ini_is_blank_line(multiple_space_line));
+    ASSERT_TRUE(ini_is_blank_line(tab_line));
     ASSERT_TRUE(ini_is_blank_line(new_line));
     ASSERT_TRUE(ini_is_blank_line(null_line));
     ASSERT_TRUE(ini_is_blank_line(alt_comment_line));
@@ -26,56 +30,112 @@ TEST(ini_tests, blank_lines)
 
 TEST(ini_tests, nonblank_line)
 {
-    const char line[] = " abcdefghijklm nopqrstuvwxyz ";
+    const char line[] = "hello world";
+    const char spaces[] = "   hello    world   ";
+    const char comment[] = "hello world ; hello world";
     ASSERT_FALSE(ini_is_blank_line(line));
+    ASSERT_FALSE(ini_is_blank_line(spaces));
+    ASSERT_FALSE(ini_is_blank_line(comment));
 }
 
 
 
 TEST(ini_tests, keys)
 {
-    const char line[] = "key=value";
-    const char line_spaces[] = " key = value ";
-    const char line_comment[] = "key=value ; comment";
-    const char line_string[] = "key=\"this is a value\"";
+    const char normal[] = "key=value";
+    const char spaces[] = " key = value ";
+    const char comment[] = "key=value ; comment";
+    const char string[] = "key=\"this is a value\"";
+    const char caps[] = "KEY=value";
+    const char number[] = "key5=value";
 
     int n = 256;
     char buffer[n];
-    ASSERT_TRUE(ini_parse_key(line, buffer, n, NULL));
+    ASSERT_TRUE(ini_parse_key(normal, buffer, n, NULL));
     ASSERT_STREQ(buffer, "key");
 
-    ASSERT_TRUE(ini_parse_key(line_spaces, buffer, n, NULL));
+    ASSERT_TRUE(ini_parse_key(spaces, buffer, n, NULL));
     ASSERT_STREQ(buffer, "key");
 
-    ASSERT_TRUE(ini_parse_key(line_comment, buffer, n, NULL));
+    ASSERT_TRUE(ini_parse_key(comment, buffer, n, NULL));
     ASSERT_STREQ(buffer, "key");
 
-    ASSERT_TRUE(ini_parse_key(line_string, buffer, n, NULL));
+    ASSERT_TRUE(ini_parse_key(string, buffer, n, NULL));
     ASSERT_STREQ(buffer, "key");
+
+    ASSERT_TRUE(ini_parse_key(caps, buffer, n, NULL));
+    ASSERT_STREQ(buffer, "KEY");
+
+    ASSERT_TRUE(ini_parse_key(number, buffer, n, NULL));
+    ASSERT_STREQ(buffer, "key5");
 }
 
 
 
-TEST(ini_tests, value)
+TEST(ini_tests, bad_keys)
 {
-    const char line[] = "key=value";
-    const char line_spaces[] = " key = value ";
-    const char line_comment[] = "key=value ; comment";
-    const char line_string[] = "key=\"this is a value\"";
+    const char number_start[] = "5key=value";
+    const char special_start[] = "]key=value";
+    const char special_middle[] = "k:ey=value";
+    const char two[] = "key key=value";
+    const char alone[] = "KEY";
+
+    ASSERT_FALSE(ini_parse_key(number_start, NULL, 0, NULL));
+    ASSERT_FALSE(ini_parse_key(special_start, NULL, 0, NULL));
+    ASSERT_FALSE(ini_parse_key(special_middle, NULL, 0, NULL));
+    ASSERT_FALSE(ini_parse_key(two, NULL, 0, NULL));
+    ASSERT_FALSE(ini_parse_key(alone, NULL, 0, NULL));
+}
+
+
+
+TEST(ini_tests, values)
+{
+    const char normal[] = "key=value";
+    const char spaces[] = " key = value ";
+    const char number[] = "key=5";
+    const char alnum[] = "key=5val5";
+    const char special[] = "key=[]()/";
+    const char comment[] = "key=value ; comment";
+    const char string[] = "key=\"this is a value\"";
 
     int n = 256;
     char buffer[n];
-    ASSERT_TRUE(ini_parse_value(line, buffer, n, NULL));
+    ASSERT_TRUE(ini_parse_value(normal, buffer, n, NULL));
     ASSERT_STREQ(buffer, "value");
 
-    ASSERT_TRUE(ini_parse_value(line_spaces, buffer, n, NULL));
+    ASSERT_TRUE(ini_parse_value(spaces, buffer, n, NULL));
     ASSERT_STREQ(buffer, "value");
 
-    ASSERT_TRUE(ini_parse_value(line_comment, buffer, n, NULL));
+    ASSERT_TRUE(ini_parse_value(number, buffer, n, NULL));
+    ASSERT_STREQ(buffer, "5");
+
+    ASSERT_TRUE(ini_parse_value(alnum, buffer, n, NULL));
+    ASSERT_STREQ(buffer, "5val5");
+
+    ASSERT_TRUE(ini_parse_value(special, buffer, n, NULL));
+    ASSERT_STREQ(buffer, "[]()/");
+
+    ASSERT_TRUE(ini_parse_value(comment, buffer, n, NULL));
     ASSERT_STREQ(buffer, "value");
 
-    ASSERT_TRUE(ini_parse_value(line_string, buffer, n, NULL));
+    ASSERT_TRUE(ini_parse_value(string, buffer, n, NULL));
     ASSERT_STREQ(buffer, "this is a value");
+}
+
+
+
+TEST(ini_tests, bad_values)
+{
+    const char two[] = "key=value value";
+    const char comment[] = "key= ; comment";
+    const char bad_string[] = "key=\"the man said \"hello\"\"";
+    const char forbidden[] = "key=[value]";
+
+    ASSERT_FALSE(ini_parse_value(two, NULL, 0, NULL));
+    ASSERT_FALSE(ini_parse_value(comment, NULL, 0, NULL));
+    ASSERT_FALSE(ini_parse_value(bad_string, NULL, 0, NULL));
+    ASSERT_FALSE(ini_parse_value(forbidden, NULL, 0, NULL));
 }
 
 
