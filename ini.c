@@ -100,15 +100,15 @@ INIData_t *ini_read_file(FILE *file, INIError_t *error)
         // Blank line?
         if (ini_is_blank_line(line)) continue;
 
-        ptrdiff_t discrepency_offset = 0;
+        ptrdiff_t discrepancy_offset = 0;
 
         // Pair?
         INIPair_t pair;
-        if (ini_parse_pair(line, &pair, &discrepency_offset))
+        if (ini_parse_pair(line, &pair, &discrepancy_offset))
         {
             if (!current_section)
             {
-                set_parse_error_(error, line, discrepency_offset, "Pairs must reside within a section.");
+                set_parse_error_(error, line, discrepancy_offset, "Pairs must reside within a section.");
                 goto parse_failure;
             }
             ini_add_pair_to_section(current_section, pair);
@@ -116,22 +116,22 @@ INIData_t *ini_read_file(FILE *file, INIError_t *error)
         }
 
         // It's not a pair... is it a section?
-        if (line[discrepency_offset] != '[')
+        if (line[discrepancy_offset] != '[')
         {
-            set_parse_error_(error, line, discrepency_offset, "Failed to parse pair.");
+            set_parse_error_(error, line, discrepancy_offset, "Failed to parse pair.");
             goto parse_failure;
         }
 
         // It's a section... but is it valid?
         INISection_t dest_section;
-        if (ini_parse_section(line, &dest_section, &discrepency_offset))
+        if (ini_parse_section(line, &dest_section, &discrepancy_offset))
         {
             const INISection_t *existing_section = ini_has_section(data, dest_section.name);
             if (existing_section)
             {
                 char buffer[INI_MAX_LINE_SIZE];
                 snprintf(buffer, INI_MAX_LINE_SIZE, "Duplicate section '%s'.", dest_section.name);
-                set_parse_error_(error, line, discrepency_offset, buffer);
+                set_parse_error_(error, line, discrepancy_offset, buffer);
                 goto parse_failure;
             }
             current_section = ini_add_section(data, dest_section.name);
@@ -139,7 +139,7 @@ INIData_t *ini_read_file(FILE *file, INIError_t *error)
         }
 
         // It's not a valid section
-        set_parse_error_(error, line, discrepency_offset, "Failed to parse section.");
+        set_parse_error_(error, line, discrepancy_offset, "Failed to parse section.");
         goto parse_failure;
     }
 
