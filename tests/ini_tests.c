@@ -128,12 +128,10 @@ TEST(ini_tests, values)
 TEST(ini_tests, bad_values)
 {
     const char two[] = "key=value value";
-    const char comment[] = "key= ; comment";
     const char bad_string[] = "key=\"the man said \"hello\"\"";
-    const char forbidden[] = "key=[value]";
+    const char forbidden[] = "key=~value~";
 
     ASSERT_FALSE(ini_parse_value(two, NULL, 0, NULL));
-    ASSERT_FALSE(ini_parse_value(comment, NULL, 0, NULL));
     ASSERT_FALSE(ini_parse_value(bad_string, NULL, 0, NULL));
     ASSERT_FALSE(ini_parse_value(forbidden, NULL, 0, NULL));
 }

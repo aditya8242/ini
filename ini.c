@@ -28,7 +28,6 @@
 
 
 
-#include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -182,7 +181,7 @@ INISection_t *ini_add_section(INIData_t *data, const char *name)
     {
         data->section_allocation *= 2;
         INISection_t *re = ini_realloc_(data->sections, sizeof(INISection_t) * data->section_allocation);
-        assert(re);
+        if (!re) return NULL;
         data->sections = re;
     }
     INISection_t *section = &data->sections[data->section_count++];
@@ -209,7 +208,7 @@ INIPair_t *ini_add_pair_to_section(INISection_t *section, const INIPair_t pair)
     {
         section->pair_allocation *= 2;
         INIPair_t *re = ini_realloc_(section->pairs, sizeof(INIPair_t) * section->pair_allocation);
-        assert(re);
+        if (!re) return NULL;
         section->pairs = re;
     }
 
