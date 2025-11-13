@@ -40,7 +40,8 @@ INI_OBJ = ini/build/ini.o # grab the object file. you're on
 
 ## Documentation
 
-You can find the documentation [here](ini.h).
+You can find the documentation [here](ini.h). You can find example code, including
+both stack and heap usage, in the `example/` directory.
 
 ## Contributing
 
