@@ -67,17 +67,20 @@ void stack()
 {
     // Very important to call this first...
     ini_disable_heap();
+
     FILE *file = fopen("example/example.ini", "r");
     assert(file);
 
     const int max_sections = 32;
     const int max_pairs = 32;
 
+    // Create our data on the stack
     INISection_t sections[max_sections];
     INIPair_t pairs[max_sections][max_pairs];
     INIPair_t *row_ptrs[max_sections];
     for (int i = 0; i < max_sections; i++)
         row_ptrs[i] = pairs[i];
+
     INIData_t ini;
     ini_init_data(&ini, sections, row_ptrs, max_sections, max_pairs);
 
