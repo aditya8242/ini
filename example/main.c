@@ -77,12 +77,12 @@ void stack()
     // Create our data on the stack
     INISection_t sections[max_sections];
     INIPair_t pairs[max_sections][max_pairs];
-    INIPair_t *row_ptrs[max_sections];
+    INIPair_t *section_pairs[max_sections];
     for (int i = 0; i < max_sections; i++)
-        row_ptrs[i] = pairs[i];
+        section_pairs[i] = pairs[i];
 
     INIData_t ini;
-    ini_init_data(&ini, sections, row_ptrs, max_sections, max_pairs);
+    ini_init_data(&ini, sections, section_pairs, max_sections, max_pairs);
 
     INIError_t error;
     ini_read_file(file, &ini, &error);
