@@ -294,8 +294,12 @@ void ini_write_file(const INIData_t *data, FILE *file);
  *   name - The name of the section to be added.
  *
  * Returns:
- *   A pointer to the newly-created section, or NULL on error or
+ *   A pointer to the newly-added section, or NULL on error or
  *   if the section already exists.
+ *
+ *   If you have opted to use heap allocations, then this
+ *   allocates space for the new heap. Otherwise it will return
+ *   a pointer to the newly initialized section.
  */
 INISection_t *ini_add_section(INIData_t *data, const char *name);
 
@@ -357,8 +361,8 @@ INISection_t *ini_has_section(const INIData_t *data, const char *section);
  *
  * Params:
  *   data    - The INIData_t object to be searched.
- *   section - The section to search for.
- *   key     - The key to search for.
+ *   section - The section string to search for.
+ *   key     - The key string to search for.
  *
  * Returns:
  *   The value in the form of a null-terminated C-string, or
@@ -528,7 +532,7 @@ bool ini_parse_section(const char *line, INISection_t *section, ptrdiff_t *discr
  *   True if the line is considered a legal k=v pair,
  *   false otherwise.
  */
-bool ini_parse_pair(const char *line, INIPair_t *pair, ptrdiff_t *discrepancy );
+bool ini_parse_pair(const char *line, INIPair_t *pair, ptrdiff_t *discrepancy);
 
 
 
@@ -585,7 +589,9 @@ bool ini_parse_value(const char *line, char *dest, unsigned n, ptrdiff_t *discre
  *
  * Returns:
  *   Pointer to INIData_t object that must be free'd later
- *   with a call to ini_free_data()
+ *   with a call to ini_free_data(). Initial allocations
+ *   comply with INI_INITIAL_ALLOCATED_PAIRS and
+ *   INI_INITIAL_ALLOCATED_SECTIONS
  */
 INIData_t *ini_create_data();
 
@@ -617,7 +623,7 @@ void ini_free_data(INIData_t *data);
  *                  and its pair allocations set to num_pair. Expected
  *                  to be of size num_sections
  *   pairs        - The pairs given to the section objects. Expected to
- *                  be a two dimensional array of size
+ *                  be a two-dimensional array of size
  *                  [num_sections][num_pairs]
  *   num_sections - The number of sections. Assumed to be the only dimension
  *                  of the sections array and the first dimension of the
