@@ -101,6 +101,16 @@ TEST(ini_tests, bad_keys)
     ASSERT_FALSE(ini_parse_key(special_middle, NULL, 0, NULL));
     ASSERT_FALSE(ini_parse_key(two, NULL, 0, NULL));
     ASSERT_FALSE(ini_parse_key(alone, NULL, 0, NULL));
+
+
+    // Exceed string size
+    char key[INI_MAX_STRING_SIZE + 3];
+    memset(key, 'a', sizeof(key));
+    key[INI_MAX_STRING_SIZE + 1] = '=';
+    key[INI_MAX_STRING_SIZE + 2] = '\0';
+
+    char buffer[INI_MAX_STRING_SIZE];
+    ASSERT_FALSE(ini_parse_key(key, buffer, INI_MAX_STRING_SIZE, NULL));
 }
 
 
@@ -154,6 +164,15 @@ TEST(ini_tests, bad_values)
     ASSERT_FALSE(ini_parse_value(two, NULL, 0, NULL));
     ASSERT_FALSE(ini_parse_value(bad_string, NULL, 0, NULL));
     ASSERT_FALSE(ini_parse_value(forbidden, NULL, 0, NULL));
+
+    // Exceed string size
+    char value[INI_MAX_STRING_SIZE + 2];
+    memset(value, 'a', sizeof(value));
+    value[0] = '=';
+    value[INI_MAX_STRING_SIZE + 1] = '\0';
+
+    char buffer[INI_MAX_STRING_SIZE];
+    ASSERT_FALSE(ini_parse_value(value, buffer, INI_MAX_STRING_SIZE, NULL));
 }
 
 
@@ -282,6 +301,15 @@ TEST(ini_tests, bad_sections)
     ASSERT_FALSE(ini_parse_section(line_comment, NULL, &error_offset));
     ASSERT_EQ(error_offset, 14);
 
+    // Exceed string size
+    char too_big_section[INI_MAX_STRING_SIZE + 3];
+    memset(too_big_section, 'a', sizeof(too_big_section));
+    too_big_section[0] = '[';
+    too_big_section[INI_MAX_STRING_SIZE  + 1] = ']';
+    too_big_section[INI_MAX_STRING_SIZE + 2] = '\0';
+
+    INISection_t section;
+    ASSERT_FALSE(ini_parse_section(too_big_section, &section, NULL));
 }
 
 

@@ -388,7 +388,7 @@ bool ini_parse_section(const char *line, INISection_t *section, ptrdiff_t *discr
     {
         if (dest_c)
         {
-            if (dest_c - section->name >= INI_MAX_STRING_SIZE)
+            if (dest_c - section->name >= INI_MAX_STRING_SIZE - 1)
                 return false;
             *dest_c++ = *c;
         }
@@ -461,7 +461,7 @@ bool ini_parse_key(const char *line, char *dest, const unsigned n, ptrdiff_t *di
     {
         if (dest)
         {
-            if (dest - beginning >= n) goto is_not_key;
+            if (c - beginning >= n - 1) goto is_not_key;
             *dest++ = *c;
         }
         c++;
@@ -498,7 +498,8 @@ bool ini_parse_value(const char *line, char *dest, const unsigned n, ptrdiff_t *
     {
         if (dest)
         {
-            if (dest - beginning >= n) goto is_not_value;;
+            if (c - beginning >= n - 1)
+                goto is_not_value;
             *dest++ = *c;
         }
         c++;
@@ -592,8 +593,8 @@ static void set_parse_error_(INIError_t *error, const char *line, const ptrdiff_
     error->encountered = true;
     error->offset = offset;
 
-    memcpy(error->msg, msg, strnlen(msg, INI_MAX_LINE_SIZE-1)+1);
-    memcpy(error->line, line, strnlen(line, INI_MAX_LINE_SIZE-1)+1);
+    memcpy(error->msg, msg, strnlen(msg, INI_MAX_LINE_SIZE - 1) + 1);
+    memcpy(error->line, line, strnlen(line, INI_MAX_LINE_SIZE - 1) + 1);
 }
 
 
