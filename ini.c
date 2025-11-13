@@ -36,11 +36,6 @@
 
 
 
-#define INITIAL_ALLOCATED_PAIRS 32
-#define INITIAL_ALLOCATED_SECTIONS 8
-
-
-
 static void *(*ini_malloc_) (size_t) = INI_DEFAULT_ALLOC;
 static void (*ini_free_) (void *) = INI_DEFAULT_FREE;
 static void *(*ini_realloc_) (void *, size_t) = INI_DEFAULT_REALLOC;
@@ -51,7 +46,6 @@ static void *(*ini_realloc_) (void *, size_t) = INI_DEFAULT_REALLOC;
 static void set_parse_error_(INIError_t *error, const char *line, ptrdiff_t offset, const char *msg);
 static void clear_parse_error_(INIError_t *error);
 static bool contains_spaces_(const char *str);
-static void section_init_(const char *name, INISection_t *section);
 static const char *skip_ignored_characters_(const char *c);
 static bool is_valid_section_starting_character_(char c);
 static bool is_valid_section_character_(char c);
@@ -91,6 +85,15 @@ void ini_set_reallocator(void *(*reallocator) (void *,size_t))
 
 
 
+#ifdef INI_TEST
+    #undef INI_INITIAL_ALLOCATED_SECTIONS
+    #undef INI_INITIAL_ALLOCATED_PAIRS
+    #define INI_INITIAL_ALLOCATED_SECTIONS 1
+    #define INI_INITIAL_ALLOCATED_PAIRS 1
+#endif
+
+
+
 INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
 {
     if (!file || !data) return NULL;
@@ -114,7 +117,16 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
                 set_parse_error_(error, line, discrepancy_offset, "Pairs must reside within a section.");
                 return NULL;
             }
-            ini_add_pair_to_section(current_section, pair);
+            if (!ini_add_pair_to_section(current_section, pair))
+            {
+                char buffer[INI_MAX_LINE_SIZE];
+                snprintf(buffer,
+                    INI_MAX_LINE_SIZE,
+                    "Failed to add pair '%s=%s' to section '%s'. Possibly insufficient allocation space.",
+                    pair.key, pair.value, current_section->name);
+                set_parse_error_(error, line, discrepancy_offset, buffer);
+                return NULL;
+            }
             continue;
         }
 
@@ -138,6 +150,16 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
                 return NULL;
             }
             current_section = ini_add_section(data, dest_section.name);
+            if (!current_section)
+            {
+                char buffer[INI_MAX_LINE_SIZE];
+                snprintf(buffer,
+                    INI_MAX_LINE_SIZE,
+                    "Failed to add section '%s' to database. Possibly insufficient allocation space.",
+                    dest_section.name);
+                set_parse_error_(error, line, discrepancy_offset, buffer);
+                return NULL;
+            }
             continue;
         }
 
@@ -182,9 +204,18 @@ INISection_t *ini_add_section(INIData_t *data, const char *name)
         INISection_t *re = ini_realloc_(data->sections, sizeof(INISection_t) * data->section_allocation);
         if (!re) return NULL;
         data->sections = re;
+        for (unsigned i = data->section_count; i < data->section_allocation; i++)
+        {
+            if (ini_malloc_)
+                data->sections[i].pairs = ini_malloc_(sizeof(INIPair_t) * INI_INITIAL_ALLOCATED_PAIRS);
+            data->sections[i].pair_allocation = INI_INITIAL_ALLOCATED_PAIRS;
+
+        }
     }
     INISection_t *section = &data->sections[data->section_count++];
-    section_init_(name, section);
+    section->pair_count = 0;
+    memset(section->name, 0, INI_MAX_STRING_SIZE);
+    strncpy(section->name, name, INI_MAX_STRING_SIZE - 1);
     return section;
 }
 
@@ -498,7 +529,7 @@ void ini_free_data(INIData_t *data)
     {
         if (data->sections)
         {
-            for (unsigned i = 0; i < data->section_count; i++)
+            for (unsigned i = 0; i < data->section_allocation; i++)
                 if (data->sections[i].pairs)
                     ini_free_(data->sections[i].pairs);
             ini_free_(data->sections);
@@ -515,14 +546,41 @@ INIData_t *ini_create_data()
     INIData_t *data = ini_malloc_(sizeof(INIData_t));
     if (!data) return NULL;
     data->section_count = 0;
-    data->section_allocation = INITIAL_ALLOCATED_SECTIONS;
+    data->section_allocation = INI_INITIAL_ALLOCATED_SECTIONS;
     data->sections = ini_malloc_(sizeof(INISection_t) * data->section_allocation);
     if (!data->sections)
     {
         free(data);
         return NULL;
     }
+    for (unsigned i = 0; i < data->section_allocation; i++)
+    {
+        INISection_t *section = &data->sections[i];
+        section->name[0] = '\0';
+        section->pair_allocation = INI_INITIAL_ALLOCATED_PAIRS;
+        section->pairs = ini_malloc_(sizeof(INIPair_t) * section->pair_allocation);
+        section->pair_count = 0;
+
+    }
     return data;
+}
+
+
+
+void ini_init_data(INIData_t* data, INISection_t* sections, INIPair_t** pairs, unsigned num_sections, unsigned num_pairs)
+{
+    if (!data || !sections || !pairs) return;
+
+    data->sections = sections;
+    data->section_count = 0;
+    data->section_allocation = num_sections;
+
+    for (unsigned i = 0; i < num_sections; i++)
+    {
+        sections[i].pairs = pairs[i];
+        sections[i].pair_count = 0;
+        sections[i].pair_allocation = num_pairs;
+    }
 }
 
 
@@ -556,19 +614,6 @@ static bool contains_spaces_(const char *str)
     while (*str++ != '\0')
         if (*str == ' ') return true;
     return false;
-}
-
-
-
-static void section_init_(const char *name, INISection_t *section)
-{
-    if (!section) return;
-    memset(section->name, 0, INI_MAX_STRING_SIZE);
-    strncpy(section->name, name, INI_MAX_STRING_SIZE - 1);
-    section->pair_count = 0;
-    section->pair_allocation = INITIAL_ALLOCATED_PAIRS;
-    if (ini_malloc_)
-        section->pairs = ini_malloc_(sizeof(INIPair_t) * INITIAL_ALLOCATED_PAIRS);
 }
 
 

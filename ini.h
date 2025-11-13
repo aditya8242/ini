@@ -85,17 +85,23 @@ bool               ini_parse_value         (const char*,       char*,         un
 INIData_t         *ini_create_data         (void);
 void               ini_free_data           (INIData_t*);
 
+// Stack
+void               ini_init_data           (INIData_t*,       INISection_t*,  INIPair_t**,  unsigned, unsigned);
+
 
 
 /* Macros */
 
-#define INI_MAX_STRING_SIZE 256
-#define INI_MAX_LINE_SIZE   1024
-
-
-
 // You can redefine these at compile time if you'd like to
 // avoid changing allocator functions at runtime.
+
+#ifndef INI_MAX_STRING_SIZE
+    #define INI_MAX_STRING_SIZE 256
+#endif
+#ifndef INI_MAX_LINE_SIZE
+    #define INI_MAX_LINE_SIZE 1024
+#endif
+
 
 #ifndef INI_DEFAULT_ALLOC
     #define INI_DEFAULT_ALLOC malloc
@@ -105,6 +111,15 @@ void               ini_free_data           (INIData_t*);
 #endif
 #ifndef INI_DEFAULT_REALLOC
     #define INI_DEFAULT_REALLOC realloc
+#endif
+
+
+
+#ifndef INI_INITIAL_ALLOCATED_PAIRS
+    #define INI_INITIAL_ALLOCATED_PAIRS 32
+#endif
+#ifndef INI_INITIAL_ALLOCATED_SECTIONS
+    #define INI_INITIAL_ALLOCATED_SECTIONS 8
 #endif
 
 
@@ -585,6 +600,32 @@ INIData_t *ini_create_data();
  *   data - The INIData_t object to be free'd.
  */
 void ini_free_data(INIData_t *data);
+
+
+
+/*
+ * Initialize a data object with sections, initialize sections
+ * with pairs. Useful for saving some time when working with
+ * the stack. See examples.
+ *
+ * Params
+ *   data         - The INIData_t object to be initialized. Its section
+ *                  count is set to zero, its section allocations set
+ *                  to num_sections.
+ *   sections    -  The sections to be initialized with pairs and given
+ *                  to the data object. Its pair count is set to zero
+ *                  and its pair allocations set to num_pair. Expected
+ *                  to be of size num_sections
+ *   pairs        - The pairs given to the section objects. Expected to
+ *                  be a two dimensional array of size
+ *                  [num_sections][num_pairs]
+ *   num_sections - The number of sections. Assumed to be the only dimension
+ *                  of the sections array and the first dimension of the
+ *                  pairs 2D array.
+ *   num_pairs    - The number of pairs per section. Assumed to be the
+ *                  second dimension of the pairs 2D array.
+ */
+void ini_init_data(INIData_t* data, INISection_t* sections, INIPair_t** pairs, unsigned num_sections, unsigned num_pairs);
 
 
 

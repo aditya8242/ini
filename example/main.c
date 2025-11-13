@@ -74,19 +74,12 @@ void stack()
     const int max_pairs = 32;
 
     INISection_t sections[max_sections];
-
     INIPair_t pairs[max_sections][max_pairs];
+    INIPair_t *row_ptrs[max_sections];
     for (int i = 0; i < max_sections; i++)
-    {
-        sections[i].pair_allocation = max_pairs;
-        sections[i].pairs = pairs[i];
-    }
-
-    INIData_t ini = {
-        .sections = sections,
-        .section_count = 0,
-        .section_allocation = max_sections
-        };
+        row_ptrs[i] = pairs[i];
+    INIData_t ini;
+    ini_init_data(&ini, sections, row_ptrs, max_sections, max_pairs);
 
     INIError_t error;
     ini_read_file(file, &ini, &error);

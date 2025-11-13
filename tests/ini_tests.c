@@ -4,11 +4,21 @@
 
 
 #include <assert.h>
+#include <math.h>
+#include <stdlib.h>
+
+
+// If you don't want some nasty bugs, call these appropriately at the beginning
+// of each TEST
+static void use_heap();
+static void use_stack();
 
 
 
 TEST(ini_tests, blank_lines)
 {
+    use_heap();
+
     const char empty_line[] = "";
     const char space_line[] = " ";
     const char multiple_space_line[] = "   ";
@@ -30,6 +40,8 @@ TEST(ini_tests, blank_lines)
 
 TEST(ini_tests, nonblank_line)
 {
+    use_heap();
+
     const char line[] = "hello world";
     const char spaces[] = "   hello    world   ";
     const char comment[] = "hello world ; hello world";
@@ -42,6 +54,8 @@ TEST(ini_tests, nonblank_line)
 
 TEST(ini_tests, keys)
 {
+    use_heap();
+
     const char normal[] = "key=value";
     const char spaces[] = " key = value ";
     const char comment[] = "key=value ; comment";
@@ -74,6 +88,8 @@ TEST(ini_tests, keys)
 
 TEST(ini_tests, bad_keys)
 {
+    use_heap();
+
     const char number_start[] = "5key=value";
     const char special_start[] = "]key=value";
     const char special_middle[] = "k:ey=value";
@@ -91,6 +107,8 @@ TEST(ini_tests, bad_keys)
 
 TEST(ini_tests, values)
 {
+    use_heap();
+
     const char normal[] = "key=value";
     const char spaces[] = " key = value ";
     const char number[] = "key=5";
@@ -127,6 +145,8 @@ TEST(ini_tests, values)
 
 TEST(ini_tests, bad_values)
 {
+    use_heap();
+
     const char two[] = "key=value value";
     const char bad_string[] = "key=\"the man said \"hello\"\"";
     const char forbidden[] = "key=~value~";
@@ -140,6 +160,8 @@ TEST(ini_tests, bad_values)
 
 TEST(ini_tests, pairs)
 {
+    use_heap();
+
     const char line[] = "key=value";
     const char line_spaces[] = " key = value ";
     const char line_comment[] = "key=value ; comment";
@@ -167,6 +189,8 @@ TEST(ini_tests, pairs)
 
 TEST(ini_tests, bad_pairs)
 {
+    use_heap();
+
     const char line_invalid_key[] = "1key=value";
     const char line_invalid_value[] = "key=va lue";
     const char line_invalid_value_spaces[] = "key = value space";
@@ -208,6 +232,8 @@ TEST(ini_tests, bad_pairs)
 
 TEST(ini_tests, sections)
 {
+    use_heap();
+
     const char line[] = "[section]";
     const char line_spaces[] = " [ section ] ";
     const char line_comment[] = "[section] ; comment here";
@@ -227,6 +253,8 @@ TEST(ini_tests, sections)
 
 TEST(ini_tests, bad_sections)
 {
+    use_heap();
+
     const char line_invalid[] = "x[section]";
     const char line_invalid_double[] = "[section   section]";
     const char line_empty[] = "";
@@ -260,30 +288,56 @@ TEST(ini_tests, bad_sections)
 
 TEST(ini_tests, file_parsing)
 {
-    const char contents[] = "[section]\n"
+    use_heap();
+
+    const char contents[] = "[Section1]\n"
                             "hello=world\n"
-                            "hi=true\n"
-                            "val=5\n"
-                            "this_one=\"is a string\"\n";
+                            "[Section2]\n"
+                            "boolean=true\n"
+                            "integer=5\n"
+                            "string=\"is a string\"\n"
+                            "float=1.0\n";
 
     FILE *file = tmpfile();
     assert(file);
     fputs(contents, file);
     rewind(file);
     INIData_t *data = ini_create_data();
-    ini_read_file(file, data, NULL);
-    ASSERT_TRUE(data != NULL);
-    ASSERT_STREQ(ini_get_value(data, "section", "hello"), "world");
-    ASSERT_STREQ(ini_get_value(data, "section", "hi"), "true");
-    ASSERT_STREQ(ini_get_value(data, "section", "val"), "5");
-    ASSERT_STREQ(ini_get_value(data, "section", "this_one"), "is a string");
+    ASSERT_TRUE(ini_read_file(file, data, NULL) != NULL);
+    fclose(file);
+    ASSERT_STREQ(ini_get_value(data, "Section1", "hello"), "world");
+    ASSERT_TRUE(ini_get_bool(data, "Section2", "boolean", false));
+    ASSERT_EQ(ini_get_signed(data, "Section2", "integer", 0), 5);
+    ASSERT_EQ(ini_get_float(data, "Section2", "float", INFINITY), 1.0f);
     ini_free_data(data);
 }
 
 
 
-TEST(ini_tests, get_string)
+TEST(ini_tests, add_pairs)
 {
+    use_heap();
+
+    const char contents[] = "[Section]\n";
+
+    FILE *file = tmpfile();
+    assert(file);
+    fputs(contents, file);
+    rewind(file);
+    INIData_t *data = ini_create_data();
+    ASSERT_TRUE(ini_read_file(file, data, NULL) != NULL);
+    fclose(file);
+    ASSERT_TRUE(ini_add_pair(data, "Section", (INIPair_t){"key", "value"}) != NULL);
+    ASSERT_TRUE(ini_add_pair(data, "SectionThatDoesNotExist", (INIPair_t){"key", "value"}) == NULL);
+    ini_free_data(data);
+}
+
+
+
+TEST(ini_tests, get_value)
+{
+    use_heap();
+
     const char contents[] = "[section]\n"
                             "hello=world\n"
                             "message=\"hello world\"\n";
@@ -294,11 +348,37 @@ TEST(ini_tests, get_string)
     rewind(file);
     INIError_t error;
     INIData_t *data = ini_create_data();
-    ini_read_file(file, data, &error);
+    ASSERT_TRUE(ini_read_file(file, data, &error) != NULL);
     fclose(file);
-    ASSERT_TRUE(data != NULL);
+    ASSERT_STREQ(ini_get_value(data, "section", "hello"), "world");
+    ASSERT_STREQ(ini_get_value(data, "section", "message"), "hello world");
+    ASSERT_TRUE(ini_get_value(data, "FakeSection", "hello") == NULL);
+    ASSERT_TRUE(ini_get_value(data, "section", "FakeKey") == NULL);
+    ini_free_data(data);
+}
+
+
+
+TEST(ini_tests, get_string)
+{
+    use_heap();
+
+    const char contents[] = "[section]\n"
+                            "hello=world\n"
+                            "message=\"hello world\"\n";
+
+    FILE *file = tmpfile();
+    assert(file);
+    fputs(contents, file);
+    rewind(file);
+    INIError_t error;
+    INIData_t *data = ini_create_data();
+    ASSERT_TRUE(ini_read_file(file, data, &error) != NULL);
+    fclose(file);
     ASSERT_STREQ(ini_get_string(data, "section", "hello", ""), "world");
     ASSERT_STREQ(ini_get_string(data, "section", "message", ""), "hello world");
+    ASSERT_STREQ(ini_get_string(data, "FakeSection", "message", "Nope"), "Nope");
+    ASSERT_STREQ(ini_get_string(data, "section", "FakeKey", "Nope"), "Nope");
     ini_free_data(data);
 }
 
@@ -306,14 +386,15 @@ TEST(ini_tests, get_string)
 
 TEST(ini_tests, get_unsigned)
 {
+    use_heap();
+
     const unsigned expected = 5;
     FILE *file = tmpfile();
     assert(file);
     fprintf(file,"[section]\nval=%d", expected);
     rewind(file);
     INIData_t *data = ini_create_data();
-    ini_read_file(file, data, NULL);
-    ASSERT_TRUE(data != NULL);
+    ASSERT_TRUE(ini_read_file(file, data, NULL) != NULL);
     const unsigned result = ini_get_unsigned(data, "section", "val", 0);
     ASSERT_EQ(result, expected);
     ini_free_data(data);
@@ -323,14 +404,15 @@ TEST(ini_tests, get_unsigned)
 
 TEST(ini_tests, get_signed)
 {
+    use_heap();
+
     const int expected = -5;
     FILE *file = tmpfile();
     assert(file);
     fprintf(file,"[section]\nval=%d", expected);
     rewind(file);
     INIData_t *data = ini_create_data();
-    ini_read_file(file, data, NULL);
-    ASSERT_TRUE(data != NULL);
+    ASSERT_TRUE(ini_read_file(file, data, NULL) != NULL);
     const int result = (int)ini_get_signed(data, "section", "val", 0);
     ASSERT_EQ(result, expected);
     ini_free_data(data);
@@ -340,14 +422,15 @@ TEST(ini_tests, get_signed)
 
 TEST(ini_tests, get_float)
 {
+    use_heap();
+
     const float expected = 5.5;
     FILE *file = tmpfile();
     assert(file);
     fprintf(file,"[section]\nval=%f", expected);
     rewind(file);
     INIData_t *data = ini_create_data();
-    ini_read_file(file, data, NULL);
-    ASSERT_TRUE(data != NULL);
+    ASSERT_TRUE(ini_read_file(file, data, NULL) != NULL);
     const float result = (float)ini_get_float(data, "section", "val", 0);
     ASSERT_FLOAT_EQ(result, expected);
     ini_free_data(data);
@@ -357,16 +440,20 @@ TEST(ini_tests, get_float)
 
 TEST(ini_tests, get_bool)
 {
-    const bool expected = 5;
+    use_heap();
+
     FILE *file = tmpfile();
     assert(file);
-    fprintf(file,"[section]\nval=%s", (expected ? "true" : "false"));
+    fprintf(file,"[section]\n"
+        "true_key=true\n"
+        "false_key=false\n");
     rewind(file);
     INIData_t *data = ini_create_data();
-    ini_read_file(file, data, NULL);
-    ASSERT_TRUE(data != NULL);
-    const bool result = ini_get_bool(data, "section", "val", !expected);
-    ASSERT_EQ(result, expected);
+    ASSERT_TRUE(ini_read_file(file, data, NULL) != NULL);
+    bool result = ini_get_bool(data, "section", "true_key", false);
+    ASSERT_TRUE(result);
+    result = ini_get_bool(data, "section", "false_key", true);
+    ASSERT_FALSE(result);
     ini_free_data(data);
 
 }
@@ -375,6 +462,8 @@ TEST(ini_tests, get_bool)
 
 TEST(ini_tests, file_writing)
 {
+    use_heap();
+
     const char contents[] = "[section]\n"
                             "hello=world\n"
                             "hi=true\n"
@@ -422,6 +511,8 @@ TEST(ini_tests, file_writing)
 
 TEST(ini_tests, parse_error_bad_key)
 {
+    use_heap();
+
     const char contents[] = "[ValidSection]\n"
                             "b$ad=pair\n";
     FILE *file = tmpfile();
@@ -442,6 +533,7 @@ TEST(ini_tests, parse_error_bad_key)
 
 TEST(ini_tests, parse_error_bad_value)
 {
+    use_heap();
     const char contents[] = "[ValidSection]\n"
                             "bad=pa$ir\n";
     FILE *file = tmpfile();
@@ -461,6 +553,7 @@ TEST(ini_tests, parse_error_bad_value)
 
 TEST(ini_tests, parse_error_no_section)
 {
+    use_heap();
     const char contents[] = "key=value\n";
     FILE *file = tmpfile();
     fputs(contents, file);
@@ -479,6 +572,7 @@ TEST(ini_tests, parse_error_no_section)
 
 TEST(ini_tests, parse_error_bad_section)
 {
+    use_heap();
     const char contents[] = "[Bad Section]\n";
     FILE *file = tmpfile();
     fputs(contents, file);
@@ -497,6 +591,7 @@ TEST(ini_tests, parse_error_bad_section)
 
 TEST(ini_tests, parse_error_duplicate_section)
 {
+    use_heap();
     const char contents[] = "[Section]\n"
                             "[Section]\n";
     FILE *file = tmpfile();
@@ -505,21 +600,114 @@ TEST(ini_tests, parse_error_duplicate_section)
     INIError_t error;
     INIData_t *data = ini_create_data();
     ASSERT_TRUE(ini_read_file(file, data, &error) == NULL);
+    fclose(file);
     ASSERT_TRUE(error.encountered);
     ASSERT_STREQ(error.line, "[Section]\n");
     ASSERT_STREQ(error.msg, "Duplicate section 'Section'.");
     ini_free_data(data);
-    fclose(file);
 }
 
 
 
 TEST(ini_tests, stack)
 {
+    use_stack();
+
+    const char contents[] = "[Section]\n"
+                            "key=value\n"
+                            "other_key=other_value\n"
+                            "[OtherSection]\n"
+                            "final_key=final_value\n";
+    FILE *file = tmpfile();
+    fputs(contents, file);
+    rewind(file);
+
+    const int max_sections = 32;
+    const int max_pairs = 32;
+
+    INISection_t sections[max_sections];
+    INIPair_t pairs[max_sections][max_pairs];
+    INIPair_t *row_ptrs[max_sections];
+    for (int i = 0; i < max_sections; i++)
+        row_ptrs[i] = pairs[i];
+    INIData_t ini;
+    ini_init_data(&ini, sections, row_ptrs, max_sections, max_pairs);
+
+    ASSERT_TRUE(ini_read_file(file, &ini, NULL) != NULL);
+    fclose(file);
+
+    ASSERT_STREQ(ini_get_string(&ini, "Section", "key", ""), "value");
+    ASSERT_STREQ(ini_get_string(&ini, "Section", "other_key", ""), "other_value");
+    ASSERT_STREQ(ini_get_string(&ini, "OtherSection", "final_key", ""), "final_value");
+}
+
+
+
+TEST(ini_tests, stack_insufficient_pair_allocation)
+{
+    use_stack();
+
     const char contents[] = "[Section]\n"
                             "key=value\n"
                             "other_key=other_value\n";
     FILE *file = tmpfile();
     fputs(contents, file);
     rewind(file);
+
+    const int max_sections = 8;
+    const int max_pairs = 1;
+
+    INISection_t sections[max_sections];
+    INIPair_t pairs[max_sections][max_pairs];
+    INIPair_t *row_ptrs[max_sections];
+    for (int i = 0; i < max_sections; i++)
+        row_ptrs[i] = pairs[i];
+    INIData_t ini;
+    ini_init_data(&ini, sections, row_ptrs, max_sections, max_pairs);
+
+    ASSERT_TRUE(ini_read_file(file, &ini, NULL) == NULL);
+    fclose(file);
+}
+
+
+
+TEST(ini_tests, stack_insufficient_section_allocation)
+{
+    use_stack();
+
+    const char contents[] = "[Section]\n"
+                            "key=value\n"
+                            "[OtherSection]\n"
+                            "other_key=other_value\n";
+    FILE *file = tmpfile();
+    fputs(contents, file);
+    rewind(file);
+
+    const int max_sections = 1;
+    const int max_pairs = 2;
+
+    INISection_t sections[max_sections];
+    INIPair_t pairs[max_sections][max_pairs];
+    INIPair_t *row_ptrs[max_sections];
+    for (int i = 0; i < max_sections; i++)
+        row_ptrs[i] = pairs[i];
+    INIData_t ini;
+    ini_init_data(&ini, sections, row_ptrs, max_sections, max_pairs);
+
+    ASSERT_TRUE(ini_read_file(file, &ini, NULL) == NULL);
+    fclose(file);
+}
+
+
+
+static void use_heap()
+{
+    ini_set_allocator(malloc);
+    ini_set_free(free);
+    ini_set_reallocator(realloc);
+}
+
+static void use_stack()
+{
+    ini_disable_heap();
 }
