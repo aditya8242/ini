@@ -101,15 +101,16 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
 
     char line[INI_MAX_LINE_SIZE];
     INISection_t *current_section = NULL;
+
     while (fgets(line, INI_MAX_LINE_SIZE, file))
     {
-        // Blank line?
-        if (ini_is_blank_line(line)) continue;
 
         ptrdiff_t discrepancy_offset = 0;
-
-        // Pair?
         INIPair_t pair;
+        INISection_t dest_section;
+
+        if (ini_is_blank_line(line)) continue;
+
         if (ini_parse_pair(line, &pair, &discrepancy_offset))
         {
             if (!current_section)
@@ -117,6 +118,7 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
                 set_parse_error_(error, line, discrepancy_offset, "Pairs must reside within a section.");
                 return NULL;
             }
+
             if (!ini_add_pair_to_section(current_section, pair))
             {
                 char buffer[INI_MAX_LINE_SIZE];
@@ -127,19 +129,15 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
                 set_parse_error_(error, line, discrepancy_offset, buffer);
                 return NULL;
             }
-            continue;
         }
 
-        // It's not a pair... is it a section?
-        if (line[discrepancy_offset] != '[')
+        else if (line[discrepancy_offset] != '[')
         {
             set_parse_error_(error, line, discrepancy_offset, "Failed to parse pair.");
             return NULL;
         }
 
-        // It's a section... but is it valid?
-        INISection_t dest_section;
-        if (ini_parse_section(line, &dest_section, &discrepancy_offset))
+        else if (ini_parse_section(line, &dest_section, &discrepancy_offset))
         {
             const INISection_t *existing_section = ini_has_section(data, dest_section.name);
             if (existing_section)
@@ -160,12 +158,13 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
                 set_parse_error_(error, line, discrepancy_offset, buffer);
                 return NULL;
             }
-            continue;
         }
 
-        // It's not a valid section
-        set_parse_error_(error, line, discrepancy_offset, "Failed to parse section.");
-        return NULL;
+        else
+        {
+            set_parse_error_(error, line, discrepancy_offset, "Failed to parse section.");
+            return NULL;
+        }
     }
 
     return data;
@@ -568,7 +567,7 @@ INIData_t *ini_create_data()
 
 
 
-void ini_init_data(INIData_t* data, INISection_t* sections, INIPair_t** pairs, unsigned num_sections, unsigned num_pairs)
+void ini_init_data(INIData_t* data, INISection_t* sections, INIPair_t** pairs, const unsigned num_sections, const unsigned num_pairs)
 {
     if (!data || !sections || !pairs) return;
 
