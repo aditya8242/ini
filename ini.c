@@ -92,9 +92,18 @@ void ini_set_reallocator(void *(*reallocator) (void *,size_t))
     #define INI_INITIAL_ALLOCATED_PAIRS 1
 #endif
 
+INIData_t *ini_read_file_path(const char *path, INIData_t *data, INIError_t *error){
+    if (!path || !data) return NULL;
+    clear_parse_error_(error);
 
+    FILE *file = fopen(path,"r");
+    if(!file) return NULL;
+    data = ini_read_file_pointer(file, data, error);
+    fclose(file);
+    return data;
+}
 
-INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
+INIData_t *ini_read_file_pointer(FILE *file, INIData_t *data, INIError_t *error)
 {
     if (!file || !data) return NULL;
     clear_parse_error_(error);
@@ -167,15 +176,21 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
         set_parse_error_(error, line, discrepancy_offset, "Failed to parse section.");
         return NULL;
     }
-
     return data;
 }
 
+void ini_write_file_path(const char *path, const INIData_t *data){
+    if (!path || !data) return;
+    
+    FILE *file = fopen(path,"w");
+    if (!file) return;
+    ini_write_file_pointer(file, data);
+    fclose(file);
+}
 
-
-void ini_write_file(const INIData_t *data, FILE *file)
+void ini_write_file_pointer(FILE *file, const INIData_t *data)
 {
-    if (!data || !file) return;
+    if (!file || !data) return;
 
     for (unsigned i = 0; i < data->section_count; i++)
     {
