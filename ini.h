@@ -57,32 +57,32 @@ void               ini_set_free            (void(*)(void*));
 void               ini_set_reallocator     (void*(*)(void*,    size_t));
 
 // File I/O
-INIData_t         *ini_read_file_path      (const char*,             INIData_t*,    INIError_t*);
-INIData_t         *ini_read_file_pointer   (FILE*,             INIData_t*,    INIError_t*);
-void               ini_write_file_path     (const char*, const INIData_t*);
+INIData_t         *ini_read_file_path      (const char*,       INIData_t*,       INIError_t*);
+INIData_t         *ini_read_file_pointer   (FILE*,             INIData_t*,       INIError_t*);
+void               ini_write_file_path     (const char*,       const INIData_t*);
 void               ini_write_file_pointer  (FILE*, const INIData_t*);
 
 // Database insertion
 INISection_t      *ini_add_section         (INIData_t*,        const char*);
-INIPair_t         *ini_add_pair            (const INIData_t*,  const char*,   INIPair_t);
+INIPair_t         *ini_add_pair            (const INIData_t*,  const char*,      INIPair_t);
 INIPair_t         *ini_add_pair_to_section (INISection_t *,    INIPair_t);
 
 // Database query
 INISection_t      *ini_has_section         (const INIData_t*,  const char*);
-const char        *ini_get_value           (const INIData_t*,  const char*,   const char*);
-const char        *ini_get_string          (const INIData_t*,  const char*,   const char*, const char*);
-unsigned long long ini_get_unsigned        (const INIData_t*,  const char*,   const char*, unsigned long long);
-long long          ini_get_signed          (const INIData_t*,  const char*,   const char*, long long);
-unsigned long long ini_get_hex             (const INIData_t*,  const char*,   const char*, unsigned long long);
-long double        ini_get_float           (const INIData_t*,  const char*,   const char*, long double);
-bool               ini_get_bool            (const INIData_t*,  const char*,   const char*, bool);
+const char        *ini_get_value           (const INIData_t*,  const char*,      const char*);
+const char        *ini_get_string          (const INIData_t*,  const char*,      const char*, const char*);
+unsigned long long ini_get_unsigned        (const INIData_t*,  const char*,      const char*, unsigned long long);
+long long          ini_get_signed          (const INIData_t*,  const char*,      const char*, long long);
+unsigned long long ini_get_hex             (const INIData_t*,  const char*,      const char*, unsigned long long);
+long double        ini_get_float           (const INIData_t*,  const char*,      const char*, long double);
+bool               ini_get_bool            (const INIData_t*,  const char*,      const char*, bool);
 
 // Parsing
 bool               ini_is_blank_line       (const char*);
-bool               ini_parse_section       (const char*,       INISection_t*, ptrdiff_t*);
-bool               ini_parse_pair          (const char*,       INIPair_t*,    ptrdiff_t*);
-bool               ini_parse_key           (const char*,       char*,         unsigned,    ptrdiff_t*);
-bool               ini_parse_value         (const char*,       char*,         unsigned,    ptrdiff_t*);
+bool               ini_parse_section       (const char*,       INISection_t*,    ptrdiff_t*);
+bool               ini_parse_pair          (const char*,       INIPair_t*,       ptrdiff_t*);
+bool               ini_parse_key           (const char*,       char*,            unsigned,    ptrdiff_t*);
+bool               ini_parse_value         (const char*,       char*,            unsigned,    ptrdiff_t*);
 
 // Heap
 INIData_t         *ini_create_data         (void);
@@ -95,18 +95,20 @@ void               ini_init_data           (INIData_t*,       INISection_t*,  IN
 
 /* Macros */
 
-// You can redefine these at compile time if you'd like to
-// avoid changing allocator functions at runtime.
-
-#define ini_read_file(T,data,error) _Generic((T),   \
-    char*: ini_read_file_path,                \
-    FILE*: ini_read_file_pointer                    \
+#define ini_read_file(T,data,error) _Generic((T), \
+    char*: ini_read_file_path,                    \
+    FILE*: ini_read_file_pointer                  \
 )(T,data,error)
 
-#define ini_write_file(T,data) _Generic((T),   \
-    char*: ini_write_file_path,          \
-    FILE*: ini_write_file_pointer              \
+#define ini_write_file(T,data) _Generic((T), \
+    char*: ini_write_file_path,              \
+    FILE*: ini_write_file_pointer            \
 )(T,data)
+
+
+
+// You can redefine these at compile time if you'd like to
+// avoid changing allocator functions at runtime.
 
 #ifndef INI_MAX_STRING_SIZE
     #define INI_MAX_STRING_SIZE 256
@@ -114,6 +116,7 @@ void               ini_init_data           (INIData_t*,       INISection_t*,  IN
 #ifndef INI_MAX_LINE_SIZE
     #define INI_MAX_LINE_SIZE 1024
 #endif
+
 
 
 #ifndef INI_DEFAULT_ALLOC

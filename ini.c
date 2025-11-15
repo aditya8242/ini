@@ -92,16 +92,24 @@ void ini_set_reallocator(void *(*reallocator) (void *,size_t))
     #define INI_INITIAL_ALLOCATED_PAIRS 1
 #endif
 
+
+
 INIData_t *ini_read_file_path(const char *path, INIData_t *data, INIError_t *error){
     if (!path || !data) return NULL;
     clear_parse_error_(error);
 
     FILE *file = fopen(path,"r");
-    if(!file) return NULL;
+    if(!file)
+    {
+        set_parse_error_(error, path, 0, "Could not open file");
+        return NULL;
+    }
     data = ini_read_file_pointer(file, data, error);
     fclose(file);
     return data;
 }
+
+
 
 INIData_t *ini_read_file_pointer(FILE *file, INIData_t *data, INIError_t *error)
 {
@@ -347,7 +355,7 @@ long long ini_get_signed(const INIData_t *data, const char *section, const char 
 
 
 
-unsigned long long ini_get_hex(const INIData_t *data, const char *section, const char *key, unsigned long long default_value)
+unsigned long long ini_get_hex(const INIData_t *data, const char *section, const char *key, const unsigned long long default_value)
 {
     const char *str = ini_get_value(data, section, key);
     if (!str) return default_value;
