@@ -68,7 +68,7 @@ INIPair_t         *ini_add_pair_to_section (INISection_t *,    INIPair_t);
 // Database query
 INISection_t      *ini_has_section         (const INIData_t*,  const char*);
 const char        *ini_get_value           (const INIData_t*,  const char*,   const char*);
-const char        *ini_get_string          (const INIData_t *, const char*,   const char*, const char*);
+const char        *ini_get_string          (const INIData_t*,  const char*,   const char*, const char*);
 unsigned long long ini_get_unsigned        (const INIData_t*,  const char*,   const char*, unsigned long long);
 long long          ini_get_signed          (const INIData_t*,  const char*,   const char*, long long);
 unsigned long long ini_get_hex             (const INIData_t*,  const char*,   const char*, unsigned long long);
