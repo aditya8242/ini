@@ -28,17 +28,13 @@ int main(void)
 
 void heap()
 {
-    FILE *file = fopen("example/example.ini", "r");
-    assert(file);
-
     INIData_t *ini = ini_create_data();
 
     INIError_t error;
-    ini_read_file(file, ini, &error);
+    ini_read_file("example/example.ini", ini, &error);
 
     if (error.encountered)
         print_error(&error);
-    fclose(file);
 
     const char *greeting = ini_get_value(ini, "Text", "greeting");
     assert(greeting);
@@ -68,9 +64,6 @@ void stack()
     // Very important to call this first...
     ini_disable_heap();
 
-    FILE *file = fopen("example/example.ini", "r");
-    assert(file);
-
     const int max_sections = 32;
     const int max_pairs = 32;
 
@@ -85,10 +78,9 @@ void stack()
     ini_init_data(&ini, sections, section_pairs, max_sections, max_pairs);
 
     INIError_t error;
-    ini_read_file(file, &ini, &error);
+    ini_read_file("example/example.ini", &ini, &error);
     if (error.encountered)
         print_error(&error);
-    fclose(file);
 
     const char *greeting = ini_get_value(&ini, "Text", "greeting");
     assert(greeting);

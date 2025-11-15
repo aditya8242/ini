@@ -547,7 +547,7 @@ TEST(ini_tests, file_writing)
     ini_read_file(input_file, data, NULL);
 
     FILE *output_file = tmpfile();
-    ini_write_file(data, output_file);
+    ini_write_file(output_file, data);
     rewind(output_file);
 
     INIData_t *copy = ini_create_data();

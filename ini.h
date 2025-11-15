@@ -28,7 +28,7 @@
  */
 
 
-
+ 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -57,8 +57,10 @@ void               ini_set_free            (void(*)(void*));
 void               ini_set_reallocator     (void*(*)(void*,    size_t));
 
 // File I/O
-INIData_t         *ini_read_file           (FILE*,             INIData_t*,    INIError_t*);
-void               ini_write_file          (const INIData_t*,  FILE*);
+INIData_t         *ini_read_file_path      (const char*,             INIData_t*,    INIError_t*);
+INIData_t         *ini_read_file_pointer   (FILE*,             INIData_t*,    INIError_t*);
+void               ini_write_file_path     (const char*, const INIData_t*);
+void               ini_write_file_pointer  (FILE*, const INIData_t*);
 
 // Database insertion
 INISection_t      *ini_add_section         (INIData_t*,        const char*);
@@ -95,6 +97,16 @@ void               ini_init_data           (INIData_t*,       INISection_t*,  IN
 
 // You can redefine these at compile time if you'd like to
 // avoid changing allocator functions at runtime.
+
+#define ini_read_file(T,data,error) _Generic((T),   \
+    char*: ini_read_file_path,                \
+    FILE*: ini_read_file_pointer                    \
+)(T,data,error)
+
+#define ini_write_file(T,data) _Generic((T),   \
+    char*: ini_write_file_path,          \
+    FILE*: ini_write_file_pointer              \
+)(T,data)
 
 #ifndef INI_MAX_STRING_SIZE
     #define INI_MAX_STRING_SIZE 256
@@ -259,7 +271,7 @@ void ini_set_reallocator(void *(*reallocator) (void*,size_t));
  * object on their own later on with a call to ini_free()
  *
  * Params:
- *   file   - File to parse
+ *   file   - File path to parse
  *   data   - The database object to be filled with ini
  *            contents.
  *   buffer - Line buffer to store erroneous line. Must be
@@ -268,7 +280,25 @@ void ini_set_reallocator(void *(*reallocator) (void*,size_t));
  * Returns:
  *   A pointer to data on success, or NULL on failure.
  */
-INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error);
+INIData_t *ini_read_file_path(const char *path, INIData_t *data, INIError_t *error);
+
+
+/*
+ * Parse an ini file and populate a data structure
+ * with contents. User will need to free the returned
+ * object on their own later on with a call to ini_free()
+ *
+ * Params:
+ *   file   - File pointer to parse
+ *   data   - The database object to be filled with ini
+ *            contents.
+ *   buffer - Line buffer to store erroneous line. Must be
+ *
+ *
+ * Returns:
+ *   A pointer to data on success, or NULL on failure.
+ */
+INIData_t *ini_read_file_pointer(FILE *file, INIData_t *data, INIError_t *error);
 
 
 
@@ -277,12 +307,23 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error);
  * INI file (or overwrite an existing one)
  *
  * Params:
+ *   file - Destination file path.
  *   data - A pointer to the INIData_t object whose data
  *          you would like to write
- *   file - Destination file pointer.
  */
-void ini_write_file(const INIData_t *data, FILE *file);
+void ini_write_file_path(const char *path, const INIData_t *data);
 
+
+/*
+ * Use the contents of an INIData_t object to generate an
+ * INI file (or overwrite an existing one)
+ *
+ * Params:
+ *   file - Destination file pointer.
+ *   data - A pointer to the INIData_t object whose data
+ *          you would like to write
+ */
+void ini_write_file_pointer(FILE *file, const INIData_t *data);
 
 
 /*
