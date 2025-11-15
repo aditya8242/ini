@@ -71,6 +71,7 @@ const char        *ini_get_value           (const INIData_t*,  const char*,   co
 const char        *ini_get_string          (const INIData_t *, const char*,   const char*, const char*);
 unsigned long long ini_get_unsigned        (const INIData_t*,  const char*,   const char*, unsigned long long);
 long long          ini_get_signed          (const INIData_t*,  const char*,   const char*, long long);
+unsigned long long ini_get_hex             (const INIData_t*,  const char*,   const char*, unsigned long long);
 long double        ini_get_float           (const INIData_t*,  const char*,   const char*, long double);
 bool               ini_get_bool            (const INIData_t*,  const char*,   const char*, bool);
 
@@ -429,6 +430,26 @@ unsigned long long ini_get_unsigned(const INIData_t *data, const char *section, 
  *   failed.
  */
 long long ini_get_signed(const INIData_t *data, const char *section, const char *key, long long default_value);
+
+
+
+/*
+ * Attempt to fetch an unsigned base-16 hex value from INI data given a
+ * section and key. If unfound, returns a provided default.
+ *
+ * Params:
+ *   data    - Pointer to the INIData_t object to search
+ *   section - The section title being searched for.
+ *   key     - The key being searched for.
+ *   default - Default value to be used if searched
+ *             value is not found or fails to be parsed.
+ *
+ * Returns:
+ *   As said above, returns the searched value or the provided
+ *   default if the searched value could not be found or parsing
+ *   failed.
+ */
+unsigned long long ini_get_hex(const INIData_t *data, const char *section, const char *key, unsigned long long default_value);
 
 
 

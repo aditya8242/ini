@@ -51,7 +51,7 @@ static bool is_valid_section_starting_character_(char c);
 static bool is_valid_section_character_(char c);
 static bool is_valid_key_starting_value_(char c);
 static bool is_valid_key_character_(char c);
-static bool is_valid_value_character_(char c, bool quoted);
+static bool is_valid_value_character_(char c);
 
 
 
@@ -101,15 +101,16 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
 
     char line[INI_MAX_LINE_SIZE];
     INISection_t *current_section = NULL;
+
     while (fgets(line, INI_MAX_LINE_SIZE, file))
     {
-        // Blank line?
-        if (ini_is_blank_line(line)) continue;
 
         ptrdiff_t discrepancy_offset = 0;
-
-        // Pair?
         INIPair_t pair;
+        INISection_t dest_section;
+
+        if (ini_is_blank_line(line)) continue;
+
         if (ini_parse_pair(line, &pair, &discrepancy_offset))
         {
             if (!current_section)
@@ -117,6 +118,7 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
                 set_parse_error_(error, line, discrepancy_offset, "Pairs must reside within a section.");
                 return NULL;
             }
+
             if (!ini_add_pair_to_section(current_section, pair))
             {
                 char buffer[INI_MAX_LINE_SIZE];
@@ -127,19 +129,15 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
                 set_parse_error_(error, line, discrepancy_offset, buffer);
                 return NULL;
             }
-            continue;
         }
 
-        // It's not a pair... is it a section?
-        if (line[discrepancy_offset] != '[')
+        else if (line[discrepancy_offset] != '[')
         {
             set_parse_error_(error, line, discrepancy_offset, "Failed to parse pair.");
             return NULL;
         }
 
-        // It's a section... but is it valid?
-        INISection_t dest_section;
-        if (ini_parse_section(line, &dest_section, &discrepancy_offset))
+        else if (ini_parse_section(line, &dest_section, &discrepancy_offset))
         {
             const INISection_t *existing_section = ini_has_section(data, dest_section.name);
             if (existing_section)
@@ -160,12 +158,13 @@ INIData_t *ini_read_file(FILE *file, INIData_t *data, INIError_t *error)
                 set_parse_error_(error, line, discrepancy_offset, buffer);
                 return NULL;
             }
-            continue;
         }
 
-        // It's not a valid section
-        set_parse_error_(error, line, discrepancy_offset, "Failed to parse section.");
-        return NULL;
+        else
+        {
+            set_parse_error_(error, line, discrepancy_offset, "Failed to parse section.");
+            return NULL;
+        }
     }
 
     return data;
@@ -331,6 +330,19 @@ long long ini_get_signed(const INIData_t *data, const char *section, const char 
 
 
 
+unsigned long long ini_get_hex(const INIData_t *data, const char *section, const char *key, unsigned long long default_value)
+{
+    const char *str = ini_get_value(data, section, key);
+    if (!str) return default_value;
+
+    char *end = NULL;
+    const unsigned long long value = strtoull(str, &end, 16);
+    if (end == str) return default_value;
+    return value;
+}
+
+
+
 long double ini_get_float(const INIData_t *data, const char *section, const char *key, const long double default_value)
 {
     const char *str = ini_get_value(data, section, key);
@@ -384,8 +396,16 @@ bool ini_parse_section(const char *line, INISection_t *section, ptrdiff_t *discr
     c = skip_ignored_characters_(c);
 
     if (!is_valid_section_starting_character_(*c)) goto is_not_section;
+
+    const char *last_space = NULL;
     while (is_valid_section_character_(*c))
     {
+        if (*c == ' ')
+        {
+            if (last_space && c - last_space == 1)
+                goto is_not_section;
+            last_space = c;
+        }
         if (dest_c)
         {
             if (dest_c - section->name >= INI_MAX_STRING_SIZE - 1)
@@ -394,7 +414,12 @@ bool ini_parse_section(const char *line, INISection_t *section, ptrdiff_t *discr
         }
         c++;
     }
-    if (dest_c) *dest_c = '\0';
+    if (dest_c)
+    {
+        if (last_space && c - last_space == 1)
+            dest_c--;
+        *dest_c = '\0';
+    }
 
     c = skip_ignored_characters_(c);
     if (*c != ']') goto is_not_section;
@@ -494,14 +519,23 @@ bool ini_parse_value(const char *line, char *dest, const unsigned n, ptrdiff_t *
     const bool quoted = (*c == '"');
     if (quoted) c++;
 
-    while (is_valid_value_character_(*c, quoted))
+    const char *last_space = NULL;
+    while (is_valid_value_character_(*c))
     {
+        if (*c == ' ')
+        {
+            if (last_space && c - last_space == 1)
+                if (!quoted) goto is_not_value;
+            last_space = c;
+        }
+
         if (dest)
         {
             if (c - beginning >= n - 1)
                 goto is_not_value;
             *dest++ = *c;
         }
+
         c++;
     }
 
@@ -510,8 +544,15 @@ bool ini_parse_value(const char *line, char *dest, const unsigned n, ptrdiff_t *
         if (*c != '"') goto is_not_value;
         c++;
     }
+    else
+        if (*c == '"') goto is_not_value;
 
-    if (dest) *dest = '\0';
+    if (dest)
+    {
+        if (last_space && c - last_space == 1)
+            dest--;
+        *dest = '\0';
+    }
 
     c = skip_ignored_characters_(c);
     if (*c == '\0') return true;
@@ -544,8 +585,10 @@ void ini_free_data(INIData_t *data)
 INIData_t *ini_create_data()
 {
     if (!ini_malloc_) return NULL;
+
     INIData_t *data = ini_malloc_(sizeof(INIData_t));
     if (!data) return NULL;
+
     data->section_count = 0;
     data->section_allocation = INI_INITIAL_ALLOCATED_SECTIONS;
     data->sections = ini_malloc_(sizeof(INISection_t) * data->section_allocation);
@@ -554,6 +597,7 @@ INIData_t *ini_create_data()
         free(data);
         return NULL;
     }
+
     for (unsigned i = 0; i < data->section_allocation; i++)
     {
         INISection_t *section = &data->sections[i];
@@ -561,14 +605,14 @@ INIData_t *ini_create_data()
         section->pair_allocation = INI_INITIAL_ALLOCATED_PAIRS;
         section->pairs = ini_malloc_(sizeof(INIPair_t) * section->pair_allocation);
         section->pair_count = 0;
-
     }
+
     return data;
 }
 
 
 
-void ini_init_data(INIData_t* data, INISection_t* sections, INIPair_t** pairs, unsigned num_sections, unsigned num_pairs)
+void ini_init_data(INIData_t* data, INISection_t* sections, INIPair_t** pairs, const unsigned num_sections, const unsigned num_pairs)
 {
     if (!data || !sections || !pairs) return;
 
@@ -612,18 +656,21 @@ static void clear_parse_error_(INIError_t *error)
 
 static bool contains_spaces_(const char *str)
 {
-    while (*str++ != '\0')
-        if (*str == ' ') return true;
-    return false;
+    return str && strchr(str, ' ');
 }
 
 
 
 static const char *skip_ignored_characters_(const char *c)
 {
-    while (isspace(*c)) c++;
+    if (!c) return NULL;
+
+    while (isspace((unsigned char)*c))
+        c++;
+
     if (*c == ';' || *c == '#')
-        while (*c != '\0') c++;
+        return c + strlen(c);
+
     return c;
 }
 
@@ -638,7 +685,7 @@ static bool is_valid_section_starting_character_(const char c)
 
 static bool is_valid_section_character_(const char c)
 {
-    return (isalnum((unsigned char)c)) || c == '_';
+    return (isalnum((unsigned char)c)) || c == '_' || c == ' ';
 }
 
 
@@ -657,12 +704,12 @@ static bool is_valid_key_character_(const char c)
 
 
 
-static bool is_valid_value_character_(const char c, const bool quoted)
+static bool is_valid_value_character_(const char c)
 {
-    if (isalnum((unsigned char)c)) return true;
-    const char valid_special[] = "_-+.,:\'()[]{}\\/";
-    for (const char *p = valid_special; *p != '\0'; p++)
-        if (c == *p) return true;
-    if (quoted && c == ' ') return true;
-    return false;
+    if (c == '\n' || c == '\r' || c == '\0'
+    ||  strchr("[];#\"", c) != NULL
+    ||  iscntrl((unsigned)c))
+        return false;
+
+    return true;
 }
