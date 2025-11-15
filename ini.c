@@ -330,6 +330,19 @@ long long ini_get_signed(const INIData_t *data, const char *section, const char 
 
 
 
+unsigned long long ini_get_hex(const INIData_t *data, const char *section, const char *key, unsigned long long default_value)
+{
+    const char *str = ini_get_value(data, section, key);
+    if (!str) return default_value;
+
+    char *end = NULL;
+    const unsigned long long value = strtoull(str, &end, 16);
+    if (end == str) return default_value;
+    return value;
+}
+
+
+
 long double ini_get_float(const INIData_t *data, const char *section, const char *key, const long double default_value)
 {
     const char *str = ini_get_value(data, section, key);

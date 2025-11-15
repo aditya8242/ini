@@ -461,6 +461,24 @@ TEST(ini_tests, get_signed)
 
 
 
+TEST(ini_tests, get_hex)
+{
+    use_heap();
+
+    const unsigned long expected = 0xDEADBEEF;
+    FILE *file = tmpfile();
+    assert(file);
+    fprintf(file,"[section]\nval=%lx", expected);
+    rewind(file);
+    INIData_t *data = ini_create_data();
+    ASSERT_TRUE(ini_read_file(file, data, NULL) != NULL);
+    const unsigned long result = ini_get_hex(data, "section", "val", 0);
+    ASSERT_LONG_EQ(result, expected);
+    ini_free_data(data);
+}
+
+
+
 TEST(ini_tests, get_float)
 {
     use_heap();
