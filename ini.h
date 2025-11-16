@@ -96,13 +96,15 @@ void               ini_init_data           (INIData_t*,       INISection_t*,  IN
 /* Macros */
 
 #define ini_read_file(T,data,error) _Generic((T), \
-    char*: ini_read_file_path,                    \
-    FILE*: ini_read_file_pointer                  \
+    const char*: ini_read_file_path,              \
+    char*:       ini_read_file_path,              \
+    FILE*:       ini_read_file_pointer            \
 )(T,data,error)
 
 #define ini_write_file(T,data) _Generic((T), \
-    char*: ini_write_file_path,              \
-    FILE*: ini_write_file_pointer            \
+    const char*: ini_write_file_path,              \
+    char*:       ini_write_file_path,              \
+    FILE*:       ini_write_file_pointer            \
 )(T,data)
 
 
