@@ -275,19 +275,10 @@ INIPair_t *ini_add_pair_to_section(INISection_t *section, const INIPair_t pair)
 INISection_t *ini_has_section(const INIData_t *data, const char *section)
 {
     if (!data || !section || !data->sections) return NULL;
-    static INIData_t *cached_data = NULL;
-    static INISection_t *cached = NULL;
-
-    if (cached && cached_data)
-        if (data == cached_data && strncmp(section, cached->name, INI_MAX_STRING_SIZE) == 0)
-            return cached;
 
     for (unsigned i = 0; i < data->section_count; i++)
         if (strncmp(section, data->sections[i].name, INI_MAX_STRING_SIZE) == 0)
-        {
-            cached = &data->sections[i];
-            return cached;
-        }
+            return &data->sections[i];
     return NULL;
 }
 
