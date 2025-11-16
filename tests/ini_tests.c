@@ -65,6 +65,7 @@ TEST(ini_tests, keys)
     const char string[] = "key=\"this is a value\"";
     const char caps[] = "KEY:value";
     const char number[] = "key5=value";
+    const char lots_of_spaces[] = "       key        = value";
 
     const int n = 256;
     char buffer[n];
@@ -85,6 +86,9 @@ TEST(ini_tests, keys)
 
     ASSERT_TRUE(ini_parse_key(number, buffer, n, NULL));
     ASSERT_STREQ(buffer, "key5");
+
+    ASSERT_TRUE(ini_parse_key(lots_of_spaces, buffer, n, NULL));
+    ASSERT_STREQ(buffer, "key");
 }
 
 
@@ -133,6 +137,7 @@ TEST(ini_tests, values)
     const char quoted_string[] = "key=\"extra   spaces\"";
     const char equation[] = "key=2+2=4";
     const char mac[] = "key:00:1B:63:84:45:E6";
+    const char lots_of_spaces[] = "key =       value         ; comment";
 
     const int n = 256;
     char buffer[n];
@@ -168,6 +173,9 @@ TEST(ini_tests, values)
 
     ASSERT_TRUE(ini_parse_value(mac, buffer, n, NULL));
     ASSERT_STREQ(buffer, "00:1B:63:84:45:E6");
+
+    ASSERT_TRUE(ini_parse_value(lots_of_spaces, buffer, n, NULL));
+    ASSERT_STREQ(buffer, "value");
 }
 
 
@@ -277,6 +285,7 @@ TEST(ini_tests, sections)
     const char line[] = "[section]";
     const char line_spaces[] = " [ This is a section ] ";
     const char line_comment[] = "[section] ; comment here";
+    const char lots_of_spaces[] = "       [       section        ]        ; comment";
 
     INISection_t section;
     ASSERT_TRUE(ini_parse_section(line, &section, NULL));
@@ -286,6 +295,9 @@ TEST(ini_tests, sections)
     ASSERT_STREQ(section.name, "This is a section");
 
     ASSERT_TRUE(ini_parse_section(line_comment, &section, NULL));
+    ASSERT_STREQ(section.name, "section");
+
+    ASSERT_TRUE(ini_parse_section(lots_of_spaces, &section, NULL));
     ASSERT_STREQ(section.name, "section");
 }
 
@@ -308,7 +320,7 @@ TEST(ini_tests, bad_sections)
     ASSERT_EQ(error_offset, 0);
 
     ASSERT_FALSE(ini_parse_section(line_invalid_spaces, NULL, &error_offset));
-    ASSERT_EQ(error_offset, 9);
+    ASSERT_EQ(error_offset, 11);
 
     ASSERT_FALSE(ini_parse_section(line_empty, NULL, &error_offset));
     ASSERT_EQ(error_offset, 0);

@@ -419,7 +419,7 @@ bool ini_parse_section(const char *line, INISection_t *section, ptrdiff_t *discr
         if (*c == ' ')
         {
             if (last_space && c - last_space == 1)
-                goto is_not_section;
+                break;
             last_space = c;
         }
 
@@ -544,7 +544,7 @@ bool ini_parse_value(const char *line, char *dest, const unsigned n, ptrdiff_t *
         if (*c == ' ')
         {
             if (last_space && c - last_space == 1)
-                if (!quoted) goto is_not_value;
+                if (!quoted) break;
             last_space = c;
         }
 
