@@ -31,7 +31,7 @@ void heap()
     INIData_t *ini = ini_create_data();
 
     INIError_t error;
-    ini_read_file("example/example.ini", ini, &error);
+    ini_read_file("example/example.ini", ini, &error, 0);
 
     if (error.encountered)
         print_error(&error);
@@ -78,7 +78,7 @@ void stack()
     ini_init_data(&ini, sections, section_pairs, max_sections, max_pairs);
 
     INIError_t error;
-    ini_read_file("example/example.ini", &ini, &error);
+    ini_read_file("example/example.ini", &ini, &error, 0);
     if (error.encountered)
         print_error(&error);
 
