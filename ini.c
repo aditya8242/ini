@@ -213,7 +213,10 @@ INIData_t *ini_read_file_pointer(FILE *file, INIData_t *data, INIError_t *error,
     return data;
 }
 
-void ini_write_file_path(const char *path, const INIData_t *data){
+
+
+void ini_write_file_path(const char *path, const INIData_t *data)
+{
     if (!path || !data) return;
     
     FILE *file = fopen(path,"w");
@@ -221,6 +224,8 @@ void ini_write_file_path(const char *path, const INIData_t *data){
     ini_write_file_pointer(file, data);
     fclose(file);
 }
+
+
 
 void ini_write_file_pointer(FILE *file, const INIData_t *data)
 {
