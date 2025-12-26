@@ -304,13 +304,13 @@ void ini_set_reallocator(void *(*reallocator) (void*,size_t));
 /**
  * @brief Parse an ini file and populate a data structure with contents. User will need to free the returned object on their own later on with a call to ini_free()
  *
- * @param file File path to parse
+ * @param file    File path to parse
  * 
- * @param data The database object to be filled with ini contents.
+ * @param data    The database object to be filled with ini contents.
  * 
- * @param buffer Line buffer to store erroneous line. Must be
+ * @param buffer  Line buffer to store erroneous line. Must be
  * 
- * @param flags Bit-aligned flags to control behavior of the file parser. See the flag macros
+ * @param flags   Bit-aligned flags to control behavior of the file parser. See the flag macros
  *
  * @return A pointer to data on success, or NULL on failure.
  * 
@@ -323,9 +323,9 @@ INIData_t *ini_read_file_path(const char *path, INIData_t *data, INIError_t *err
  * with contents. User will need to free the returned
  * object on their own later on with a call to ini_free()
  *
- *   @param file File pointer to parse
- *   @param data The database object to be filled with ini contents.
- * 				 Must be a valid pointer.
+ *   @param file  File pointer to parse
+ *   @param data  The database object to be filled with ini contents.
+ * 				  Must be a valid pointer.
  *   @param error Pointer to error object to keep track of 
  * 				  erroneous character offset and store error message
  *   @param flags Bit-aligned flags to control behavior of the file parser.
@@ -365,8 +365,8 @@ void ini_write_file_pointer(FILE *file, const INIData_t *data);
  * (see above).
  * @see ini_section_init()
  *
- * @param data - The INIData_t object that will acquire the new section.
- * @param name - The name of the section to be added.
+ * @param data The INIData_t object that will acquire the new section.
+ * @param name The name of the section to be added.
  *
  * @return A pointer to the newly-added section, or NULL on error or 
  *         if the section already exists.
@@ -383,12 +383,12 @@ INISection_t *ini_add_section(INIData_t *data, const char *name);
  * Add a pair to an INIData_t object by providing the section
  * name and indirectly adding it to the section.
  *
- *   @param data The INIData_t object to add the pair to. Must be
- *             	 a valid pointer
+ *   @param data    The INIData_t object to add the pair to. Must be
+ *             	    a valid pointer
  *   @param section The **name** of the section to add the pair
  *             		to. Assumed to be null-terminated.
- *   @param pair The pair to be added. Assumed that both internal
- *               strings for key and value are null-terminated.
+ *   @param pair    The pair to be added. Assumed that both internal
+ *                  strings for key and value are null-terminated.
  *
  * 	 @return
  *   A pointer to the pair after being added to the proper
@@ -404,8 +404,8 @@ INIPair_t *ini_add_pair(const INIData_t *data, const char *section, INIPair_t pa
  * 	INIData_t object.
  *
  * 	  @param section The section to acquire the pair.
- * 	  @param pair A pair object whose data will be copied into
- * 	              a new pair in the section.
+ * 	  @param pair    A pair object whose data will be copied into
+ * 	                 a new pair in the section.
  *	
  *	@return A pointer to the newly-added pair within the section.
  */
@@ -416,7 +416,7 @@ INIPair_t *ini_add_pair_to_section(INISection_t *section, INIPair_t pair);
 /**
  * Query for a section object based on the section name.
  *
- *  @param data The INIData_t object that represents an INI file.
+ *  @param data    The INIData_t object that represents an INI file.
  *  @param section The name of the section you are checking for.
  *
  *  @return A pointer to the located INISection_t object, or NULL if
@@ -430,9 +430,9 @@ INISection_t *ini_has_section(const INIData_t *data, const char *section);
  * Retrieve a value from an INIData_t object given a section
  * name and a key value.
  *
- *   @param data The INIData_t object to be searched.
+ *   @param data    The INIData_t object to be searched.
  *   @param section The section string to search for.
- *   @param key The key string to search for.
+ *   @param key     The key string to search for.
  *
  * @return The value in the form of a null-terminated C-string, or
  *         NULL if not found.
@@ -445,9 +445,9 @@ const char *ini_get_value(const INIData_t *data, const char *section, const char
  * Attempt to fetch an string value from INI data given a
  * section and key. If unfound, returns a provided default.
  *
- *   @param data Pointer to the INIData_t object to search
+ *   @param data    Pointer to the INIData_t object to search
  *   @param section The section title being searched for.
- *   @param key The key being searched for.
+ *   @param key     The key being searched for.
  *   @param default Default value to be used if searched
  *             	  	value is not found or fails to be parsed.
  *
@@ -463,9 +463,9 @@ const char *ini_get_string(const INIData_t *data, const char *section, const cha
  * Attempt to fetch an unsigned integer value from INI data given a
  * section and key. If unfound, returns a provided default.
  *
- *   @param data Pointer to the INIData_t object to search
+ *   @param data    Pointer to the INIData_t object to search
  *   @param section The section title being searched for.
- *   @param key The key being searched for.
+ *   @param key     The key being searched for.
  *   @param default Default value to be used if searched
  *             		value is not found or fails to be parsed.
  *
@@ -481,9 +481,9 @@ unsigned long long ini_get_unsigned(const INIData_t *data, const char *section, 
  * Attempt to fetch a signed integer value from INI data given a
  * section and key. If unfound, returns a provided default.
  *
- *   @param data Pointer to the INIData_t object to search
+ *   @param data    Pointer to the INIData_t object to search
  *   @param section The section title being searched for.
- *   @param key The key being searched for.
+ *   @param key     The key being searched for.
  *   @param default Default value to be used if searched
  *             		value is not found or fails to be parsed.
  *
@@ -499,9 +499,9 @@ long long ini_get_signed(const INIData_t *data, const char *section, const char 
  * Attempt to fetch an unsigned base-16 hex value from INI data given a
  * section and key. If unfound, returns a provided default.
  *
- *   @param data Pointer to the INIData_t object to search
+ *   @param data    Pointer to the INIData_t object to search
  *   @param section The section title being searched for.
- *   @param key The key being searched for.
+ *   @param key     The key being searched for.
  *   @param default Default value to be used if searched
  *					value is not found or fails to be parsed.
  *
@@ -517,9 +517,9 @@ unsigned long long ini_get_hex(const INIData_t *data, const char *section, const
  * Attempt to fetch an floating point value from INI data given a
  * section and key. If unfound, returns a provided default.
  *
- *   @param data Pointer to the INIData_t object to search
+ *   @param data    Pointer to the INIData_t object to search
  *   @param section The section title being searched for.
- *   @param key The key being searched for.
+ *   @param key     The key being searched for.
  *   @param default Default value to be used if searched
  *             		value is not found or fails to be parsed.
  *
@@ -535,9 +535,9 @@ long double ini_get_float(const INIData_t *data, const char *section, const char
  * Attempt to fetch an boolean from INI data given a section
  * and key. If unfound, returns a provided default.
  *
- *   @param data Pointer to the INIData_t object to search
+ *   @param data    Pointer to the INIData_t object to search
  *   @param section The section title being searched for.
- *   @param key The key being searched for.
+ *   @param key     The key being searched for.
  *   @param default Default value to be used if searched
  *             		value is not found or fails to be parsed.
  *
@@ -569,13 +569,13 @@ bool ini_is_blank_line(const char *line);
  * A helper function that parses a character array and
  * attempts to parse a valid section.
  *
- *   @param line The character array to be parsed. Assumed
- *               to be null-terminated.
- *   @param section A pointer to a destination section to
- *					store name strings. If NULL is provided,
-*                  	has no effect. If a string is not a valid
-*                  	section, then the name string is zero-length
-*                  	and null-terminated.
+ *   @param line        The character array to be parsed. Assumed
+ *                      to be null-terminated.
+ *   @param section     A pointer to a destination section to
+ *					    store name strings. If NULL is provided,
+*                  	    has no effect. If a string is not a valid
+*                  	    section, then the name string is zero-length
+*                  	    and null-terminated.
  *   @param discrepancy A pointer to an integer representing the
  *                      offset of the erroneous character if
  *                      present. If no error found, will be given
@@ -592,13 +592,13 @@ bool ini_parse_section(const char *line, INISection_t *section, ptrdiff_t *discr
  * A helper function that reads a character array and
  * attempts to parse a valid pair.
  *
- *   @param line The character array to be parsed. Assumed to be
- *               null-terminated.
- *   @param pair A pointer to a destination pair to store
- *               key and value strings. If NULL is provided,
- *               has no effect. If a string is not a valid
- *               pair, then the key and value strings are
- *               zero-length and null-terminated.
+ *   @param line        The character array to be parsed. Assumed to be
+ *                      null-terminated.
+ *   @param pair        A pointer to a destination pair to store
+ *                      key and value strings. If NULL is provided,
+ *                      has no effect. If a string is not a valid
+ *                      pair, then the key and value strings are
+ *                      zero-length and null-terminated.
  *   @param discrepancy A pointer to an integer representing the
  *                  	offset of the erroneous character if
  *                  	present. If no error found, will be given
@@ -615,15 +615,15 @@ bool ini_parse_pair(const char *line, INIPair_t *pair, ptrdiff_t *discrepancy);
  * A helper function that parses a character array and
  * attempts to parse a valid key.
  *
- *   @param line The character array to be parsed. Assumed
- *				 to be null-terminated.
- *   @param dest  A pointer to a destination buffer to
- *                store key string. If NULL is provided,
- *                has no effect. If a string is not a valid
- *                section, then the string is invalid and
- *                not guaranteed to be null-terminated.
- *   @param n The size of the destination buffer. Assumed
- *            to be accurate.
+ *   @param line        The character array to be parsed. Assumed
+ *				        to be null-terminated.
+ *   @param dest        A pointer to a destination buffer to
+ *                      store key string. If NULL is provided,
+ *                      has no effect. If a string is not a valid
+ *                      section, then the string is invalid and
+ *                      not guaranteed to be null-terminated.
+ *   @param n           The size of the destination buffer. Assumed
+ *                      to be accurate.
  *   @param discrepancy A pointer to an integer representing the
  *                  	offset of the erroneous character if
  *                  	present. If no error found, will be given
@@ -640,14 +640,14 @@ bool ini_parse_key(const char *line, char *dest, unsigned n, ptrdiff_t *discrepa
  * A helper function that parses a character array and
  * attempts to parse a valid value.
  *
- *   @param line The character array to be parsed.
- *   @param dest  A pointer to a destination buffer to
- *                store value string. If NULL is provided,
- *                has no effect. If a string is not a valid
- *                section, then the string is invalid and
- *                not guaranteed to be null-terminated.
- *   @param n The size of the destination buffer. Assumed
- *            to be accurate.
+ *   @param line        The character array to be parsed.
+ *   @param dest        A pointer to a destination buffer to
+ *                      store value string. If NULL is provided,
+ *                      has no effect. If a string is not a valid
+ *                      section, then the string is invalid and
+ *                      not guaranteed to be null-terminated.
+ *   @param n           The size of the destination buffer. Assumed
+ *                      to be accurate.
  *   @param discrepancy A pointer to an integer representing the
  *                  	offset of the erroneous character if
  *                  	present. If no error found, will be given
@@ -661,7 +661,7 @@ bool ini_parse_value(const char *line, char *dest, unsigned n, ptrdiff_t *discre
 
 
 /**
- * @brief Create a heap-allocated INIData_t database object.
+ * @brief  Create a heap-allocated INIData_t database object.
  *
  * @return Pointer to INIData_t object that must be free'd later
  *   	   with a call to ini_free_data(). Initial allocations
@@ -688,21 +688,21 @@ void ini_free_data(INIData_t *data);
  * with pairs. Useful for saving some time when working with
  * the stack. See examples.
  *
- *   @param data  The INIData_t object to be initialized. Its section
- *                count is set to zero, its section allocations set
- *                to num_sections.
- *   @param sections   The sections to be initialized with pairs and given
- *                     to the data object. Its pair count is set to zero
- *                     and its pair allocations set to num_pair. Expected
- *                     to be of size num_sections
- *   @param pairs The pairs given to the section objects. Expected to
- *                be a two-dimensional array of size
- *                [num_sections][num_pairs]
+ *   @param data         The INIData_t object to be initialized. Its section
+ *                       count is set to zero, its section allocations set
+ *                       to num_sections.
+ *   @param sections     The sections to be initialized with pairs and given
+ *                       to the data object. Its pair count is set to zero
+ *                       and its pair allocations set to num_pair. Expected
+ *                       to be of size num_sections
+ *   @param pairs        The pairs given to the section objects. Expected to
+ *                       be a two-dimensional array of size
+ *                       [num_sections][num_pairs]
  *   @param num_sections The number of sections. Assumed to be the only dimension
  *                 		 of the sections array and the first dimension of the
  *                  	 pairs 2D array.
- *   @param num_pairs The number of pairs per section. Assumed to be the
- *					  second dimension of the pairs 2D array.
+ *   @param num_pairs    The number of pairs per section. Assumed to be the
+ *					     second dimension of the pairs 2D array.
  */
 void ini_init_data(INIData_t* data, INISection_t* sections, INIPair_t** pairs, unsigned num_sections, unsigned num_pairs);
 
